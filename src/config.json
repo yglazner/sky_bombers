@@ -1,0 +1,11 @@
+[
+
+    {
+        "type": "numeric",
+        "title": "Number of players",
+        "desc": "sets the numbers of players in the game",
+        "section": "stuff",
+        "key": "players_num"
+        
+    }
+]

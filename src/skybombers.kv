@@ -1,0 +1,127 @@
+#:import random random
+#:import sys sys
+<Sprite>:
+    id: sprite
+    radius: (self.width + self.height) / 2
+    r: 0
+    g: 1
+    b: 0
+    a: 0.5
+    #size: 60, 60
+    
+            
+            
+    
+<Player>:
+    canvas.before:
+        Color:
+            rgba: self.r, self.g, self.b, self.a
+        Triangle:
+            points: (0,0,self.width,self.height/2, 0, self.height)   
+        Color:
+            rgba: 1-(self.lives)/ 5 , (self.lives)/ 5, 0.5, 0.75 * (self.lives)/ 5
+        Rectangle:
+            pos: (-self.width*0.10 ,self.height /10 * (5-self.lives), )
+            size: self.width*0.10, (self.height * 0.80) * (self.lives)/ 5
+       
+<Bullet>:
+   
+    size_hint: 0.005, 0.005
+    canvas:
+        Color:
+            rgba: 1,0,0,1
+        Line:
+            circle: (self.size[0]/2, self.size[1]/2, self.radius * self.blow)            
+        
+
+<Game>:
+    area: area
+    
+    Image:
+        id: background
+        size: root.size
+        source: random.choice(["imgs/Clouds_RJ1_2613.jpg"])
+        strech: True
+        keep_ratio: False            
+    FloatLayout:
+        id: area
+    Label:
+        text: 'FPS'
+        pos_hint: {'x': 0.50, 'y':0.80}
+
+<MyButton@BoxLayout+Button>:
+    id: pop
+    button_text: "nothing"
+    background_normal: ""
+    background_color: (1,0,0,1)
+    AutoSizedLabel:
+        text: pop.button_text
+        size_hint:1.0,1.0
+        ratio: 0.8
+
+<ButtonPop>:
+    title: "Press a button"
+
+<ConfigScreen>:
+    s: s
+    Settings:
+        id: s
+        on_close: root.save()
+
+<GameSetup>:
+    players: []
+    BoxLayout:
+        orientation:  'vertical'
+        AutoSizedLabel:
+            text: "Player 1" if 1 in root.players else ''
+        AutoSizedLabel:
+            text: "Player 2" if 2 in root.players else ''
+        AutoSizedLabel:
+            text: "Player 3" if 3 in root.players else ''
+        AutoSizedLabel:
+            text: "Player 4" if 4 in root.players else ''
+        AutoSizedLabel:
+            text: "Player 5" if 5 in root.players else ''
+        AutoSizedLabel:
+            text: "Player 6" if 6 in root.players else ''            
+        MyButton:
+            button_text: "Go"
+            background_color: (0.1,0.8,0,1)
+            on_release: root.go()
+            
+<GameOver>:
+    winner: 'blah'
+    BoxLayout:
+        orientation:  'vertical'
+        AutoSizedLabel:
+            size_hint: 1., 0.7
+            text: root.winner
+            
+        MyButton:
+            size_hint: 1., 0.15
+            button_text: "Again!"
+            on_release: root.manager.current = 'game'
+        MyButton:
+            size_hint: 1., 0.15
+            button_text: "Menu"
+            on_release: root.manager.current = 'menu'
+            
+<Menu>:
+    BoxLayout:
+        orientation:  'vertical'
+        
+        MyButton:
+            button_text: "Play"
+            background_color: (0.1,0.8,0,1)
+            on_release: root.manager.current = 'game_setup'
+        MyButton:
+            button_text: "Config"
+            background_color: (0.75,0.8,0,1)
+            on_release: root.manager.current = 'config'
+        MyButton:
+            button_text: "Exit"
+            background_color: (1,0.8,0,0.5)
+            on_release: sys.exit(0)
+
+            
+            
