@@ -32,6 +32,7 @@ sm = ScreenManager()
 
 KEYS = defaultdict(lambda: None)
 
+Config.full_screen = 1
 
 class Sprite(Scatter):
    
@@ -39,7 +40,7 @@ class Sprite(Scatter):
    
     source = StringProperty('')
     radius = NumericProperty(0.0)
-
+    thrust =  NumericProperty(0.0)
     
     def __init__(self, game, **kwargs):
         self.game = game
@@ -51,13 +52,22 @@ class Sprite(Scatter):
         for attr, value in attrs.items():
             setattr(self, attr, value) 
         
-        self.velocity = 0.0
+        self.velocity_x = 0.0
+        self.velocity_y = 0.0
+
+       
         
         
     def update(self, plats=[],):
+        thrust = self.thrust
+        y_t = math.sin(radians(self.rotation)) * thrust
+        x_t = math.cos(radians(self.rotation)) * thrust
         
-        self.y += self.velocity * math.sin(radians(self.rotation))
-        self.x += self.velocity * math.cos(radians(self.rotation))
+        self.velocity_x += x_t
+        self.velocity_y += y_t
+        
+        self.y += self.velocity_y
+        self.x += self.velocity_x
         
         
 
@@ -93,15 +103,17 @@ class Bullet(Sprite):
     blow = NumericProperty(1.0)
     damage = NumericProperty(1)
     def __init__(self, game, owner, **kw):
-        super(Bullet, self).__init__(game, **kw)        
-        self.velocity = owner.velocity + 3.0
+        super(Bullet, self).__init__(game, **kw)     
+        self.rotation = owner.rotation   
+        self.velocity_x = owner.velocity_x + math.cos(radians(self.rotation)) * 8
+        self.velocity_y = owner.velocity_y +  math.sin(radians(self.rotation)) * 8
         
         self.active = True
         self.first = 1
         self.owner = owner
         
         self.center = -200, -200
-        self.rotation = owner.rotation
+        self.blow_rate = 2.0
         
         self.counter = 0
         
@@ -120,8 +132,10 @@ class Bullet(Sprite):
             self.game.remove_bullet(self)
             self.active = False
         if not self.active:
-            self.velocity *= 0.95
-            self.blow *= 1.05
+            self.velocity_x *= 0.75
+            self.velocity_y *= 0.75
+            self.blow *= self.blow_rate
+            self.blow_rate *= 0.90
             
         super(Bullet, self).update()
 
@@ -131,10 +145,12 @@ class Player(Sprite):
     
     def __init__(self, game, name, keys, **kw):
         super(Player, self).__init__(game, **kw)
-        self.velocity = 5.0
+        self.velocity_x = 1.0 * math.cos(radians(self.rotation))
+        self.velocity_y = 1.0 * math.sin(radians(self.rotation))
         self.reload = 0
         self.keys = keys
         self.name = name
+        self.speed = 0.2
         
 
     def check_wall_collision(self):
@@ -150,9 +166,8 @@ class Player(Sprite):
         if y-r < 0:
             return True
             
-    
-    
-    def update(self,  keys=KEYS):
+
+    def update(self,  user_pressed=KEYS):
         
         
         if self.lives <= 0 or self.check_wall_collision():
@@ -161,12 +176,15 @@ class Player(Sprite):
             self.game.mark_dead(self)
             self.update = self.play_dead
         self.reload -= 1
-
-        if keys[self.keys['left']]:
+        keys = self.keys
+        self.thrust = 0
+        if user_pressed[keys['left']]:
             self.rotation += 5
-        elif keys[self.keys['right']]:    
+        elif user_pressed[keys['right']]:    
             self.rotation -= 5
-        if keys[self.keys['fire']]:
+        if user_pressed[keys['thrust']]:
+            self.thrust = self.speed
+        if user_pressed[keys['fire']]:
             self.fire()
         
         super(Player, self).update()
@@ -252,6 +270,13 @@ class Game(Screen):
                 if p not in filter:
                     return p
     
+
+    def create_gift(self):
+        if random.choice(['top', 'buttom', 'left', 'right']):
+            y = (GlobalStuff.top - 20) * random.random() + 10
+        x = (GlobalStuff.right - 20) * random.random() + 10
+        Gift(center_x=x, center_y=y)
+    
     def _update(self, dt=None, keys= KEYS):
         self.count += dt
         self.frames_count += 1
@@ -270,6 +295,9 @@ class Game(Screen):
             s = self.manager.get_screen('game_over')
             s.set_winner(self.players[0].name if self.players else None)
             self.manager.current = 'game_over'
+        
+        #if random.random() > 0.990:
+        #    self.create_gift()
             
         #wall collisions
         
@@ -331,7 +359,7 @@ class ConfigScreen(Screen):
     
     s = ObjectProperty(None)
     
-    player_keys = 'left right power fire special'.split()
+    player_keys = 'left right thrust fire special'.split()
     
     def __init__(self, **kw):
         super(ConfigScreen, self).__init__(**kw)
@@ -521,4 +549,5 @@ class SkyBombersApp(App):
         return sm
 
 if __name__ == '__main__':
+    
     SkyBombersApp().run()
