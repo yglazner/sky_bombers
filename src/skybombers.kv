@@ -2,7 +2,7 @@
 #:import sys sys
 <Sprite>:
     id: sprite
-    radius: (self.width + self.height) / 2
+    radius: (self.width + self.height) / 4
     r: 0
     g: 1
     b: 0
@@ -100,9 +100,11 @@
         MyButton:
             size_hint: 1., 0.15
             button_text: "Again!"
+            background_color: (0.1,0.8,0,1)
             on_release: root.manager.current = 'game'
         MyButton:
             size_hint: 1., 0.15
+            background_color: (0.75,0.8,0,1)
             button_text: "Menu"
             on_release: root.manager.current = 'menu'
             

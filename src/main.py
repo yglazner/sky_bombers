@@ -71,7 +71,10 @@ class GlobalStuff(object):
     
     @classmethod
     def init(cls):
-        
+        cls.right = Window.width
+        cls.left = 0
+        cls.top = Window.height
+        cls.buttom = 0
         cls.center_x = Window.width / 2
         cls.center_y = Window.height / 2
         cls.size = cls.width, cls.height = Window.width, Window.height
@@ -125,8 +128,27 @@ class Player(Sprite):
         self.keys = keys
         self.name = name
         
+
+    def check_wall_collision(self):
+        r = self.radius
+        print(r, self.size, self.center)
+        x, y = self.center
+        if x - r < 0:
+            return True
+        if x + r > GlobalStuff.right:
+            return True
+        if y + r > GlobalStuff.top:
+            return True
+        if y-r < 0:
+            return True
+            
+    
+    
     def update(self,  keys=KEYS):
-        if self.lives <= 0:
+        
+        
+        if self.lives <= 0 or self.check_wall_collision():
+            self.lives = 0
             self.counter = 20
             self.game.mark_dead(self)
             self.update = self.play_dead
@@ -185,6 +207,9 @@ class Game(Screen):
             self.players.append(p)
             self.area.add_widget(p)
             
+        
+        
+            
         self.label = Label(text="FPS: ?", pos=(200,200)) 
         self.area.add_widget(self.label)
         self._loop = Clock.schedule_interval(self._update, 1.0/36)
@@ -237,6 +262,10 @@ class Game(Screen):
             s = self.manager.get_screen('game_over')
             s.set_winner(self.players[0].name if self.players else None)
             self.manager.current = 'game_over'
+            
+        #wall collisions
+        
+                
 
 
 class ButtonPop(Popup):
@@ -357,7 +386,7 @@ class ConfigScreen(Screen):
                    },
                 {'name': 'Player2', 
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
-                   'pos': (-50, 50),
+                   'pos': (50, 200),
                    'size_hint': (0.05, 0.05),
                    'rotation': 45 
                    },
