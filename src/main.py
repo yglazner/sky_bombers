@@ -39,10 +39,18 @@ class Sprite(Scatter):
    
     source = StringProperty('')
     radius = NumericProperty(0.0)
+
     
     def __init__(self, game, **kwargs):
         self.game = game
+        attrs = {}
+        for attr in 'rgba':
+            if attr in kwargs:
+                attrs[attr] = kwargs.pop(attr)
         super(Sprite, self).__init__( **kwargs )
+        for attr, value in attrs.items():
+            setattr(self, attr, value) 
+        
         self.velocity = 0.0
         
         
@@ -222,12 +230,12 @@ class Game(Screen):
 
     def add_bullet(self, bullet):
         self.bullets.append(bullet)
-        self.add_widget(bullet)
+        self.area.add_widget(bullet)
     
     def remove_bullet(self, bullet):
         if bullet in self.bullets:
             self.bullets.remove(bullet)
-            self.remove_widget(bullet)
+            self.area.remove_widget(bullet)
             
     def mark_dead(self, player):
         self.players.remove(player)
@@ -381,41 +389,50 @@ class ConfigScreen(Screen):
     players = [ {'name': 'Player1', 
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
                    'pos': (50, 50),
-                   'size_hint': (0.05, 0.05),
+                   
+                   'r': 1.0, 'g': 1.0, 'b': 0.75,
+                   
                    'rotation': 45 
                    },
                 {'name': 'Player2', 
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
                    'pos': (50, 200),
-                   'size_hint': (0.05, 0.05),
+                  
+                   'r': 1.0, 'g': 0.5, 'b': 0.75,
                    'rotation': 45 
                    },
                 {'name': 'Player3', 
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
                    'pos': (250, 50),
-                   'size_hint': (0.05, 0.05),
+                  
+                   'r': 0.5, 'g': 0.2, 'b': 0.75,
                    'rotation': 45 
                    },
                
                 {'name': 'Player4', 
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
                    'pos': (350, 50),
-                   'size_hint': (0.05, 0.05),
+                  
+                   'r': 0.5, 'g': 0.5, 'b': 0.98,
                    'rotation': 45 
                    },
                 {'name': 'Player5', 
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
                    'pos': (450, 50),
-                   'size_hint': (0.05, 0.05),
+                  
+                   'r': 1.0, 'g': 0.1, 'b': 0.99,
                    'rotation': 45 
                    },
                 {'name': 'Player6', 
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
                    'pos': (550, 50),
-                   'size_hint': (0.05, 0.05),
+                  
+                   'r': 0.35, 'g': 0.99, 'b': 0.99,
                    'rotation': 45 
                    },
                ]
+    for p in players:
+        p['size_hint'] = (0.02, 0.02)
                
                
                
