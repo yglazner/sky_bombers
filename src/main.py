@@ -42,7 +42,8 @@ class Sprite(Scatter):
     radius = NumericProperty(0.0)
     thrust =  NumericProperty(0.0)
     
-    def __init__(self, game, **kwargs):
+    def __init__(self, game, velocity_x=0.0, velocity_y=0.0,
+                 **kwargs):
         self.game = game
         attrs = {}
         for attr in 'rgba':
@@ -52,9 +53,8 @@ class Sprite(Scatter):
         for attr, value in attrs.items():
             setattr(self, attr, value) 
         
-        self.velocity_x = 0.0
-        self.velocity_y = 0.0
-
+        self.velocity_x = velocity_x
+        self.velocity_y = velocity_y
        
         
         
@@ -208,7 +208,37 @@ class Player(Sprite):
         self.reload = 10
         bullet = Bullet(self.game, self)
         self.game.add_bullet(bullet)
+
+class BaseGift(Sprite):
+    
+    def __init__(self, game, **kwargs):
+        super(BaseGift, self).__init__(game, **kwargs)
+    
+    def update(self):
+        p = self.game.check_player_collision(self)
+        if p:
+            self.apply_gift(p)
+            self.game.remove_gift(self)
+            return
+        super(BaseGift, self).update()
+
+
+    def apply_gift(self, player):
+        raise NotImplementedError("BaseGift is not a real Gift :)")
+
+class SpeedGift(BaseGift):
+    
+    def apply_gift(self, player):
         
+        player.speed *= 1.3
+        print("player %s thrust is %d" % (player.name, player.thrust))
+
+gift_types = [SpeedGift, ]
+
+def gen_gift(*args, **kw):
+    return random.choice(gift_types)(*args, **kw)
+    
+
 class Game(Screen):
     area = ObjectProperty(None)
     
@@ -219,12 +249,14 @@ class Game(Screen):
     def setup(self, players):
         self.player_nums = players
         
+    
         
     def on_enter(self, *args):
         Screen.on_enter(self, *args)
         for w in list(self.area.children):
             self.area.remove_widget(w)
         self.players = []
+        self.gifts = []
         self.dead_players = []
         self.bullets = []
         for i, p in enumerate(ConfigScreen.players, start=1):
@@ -269,13 +301,35 @@ class Game(Screen):
             if p.collide(obj):
                 if p not in filter:
                     return p
-    
+                
+    def remove_gift(self, gift):
+        self.gifts.remove(gift)
+        self.area.remove_widget(gift)
 
     def create_gift(self):
-        if random.choice(['top', 'buttom', 'left', 'right']):
+        p = random.choice(['top', 'buttom', 'left', 'right'])
+        stuff = {'size_hint': (0.03, 0.03)}
+        if p in ['left', 'right']:
             y = (GlobalStuff.top - 20) * random.random() + 10
-        x = (GlobalStuff.right - 20) * random.random() + 10
-        Gift(center_x=x, center_y=y)
+            if p == 'left':
+                x = 0
+                stuff['velocity_x'] = 5
+            else:
+                x = GlobalStuff.right
+                stuff['velocity_x'] = -5
+        else:
+            x = (GlobalStuff.right - 20) * random.random() + 10
+            if p == 'top':
+                y = GlobalStuff.top
+                stuff['velocity_y'] = -5
+            else:
+                y = 0
+                stuff['velocity_y'] = 5
+    
+        gift = gen_gift(self, center_x=x, center_y=y, **stuff)
+        self.area.add_widget(gift)
+        self.gifts.append(gift)
+        
     
     def _update(self, dt=None, keys= KEYS):
         self.count += dt
@@ -284,7 +338,7 @@ class Game(Screen):
         for b in self.bullets:
             b.update()
         
-        for p in itertools.chain(self.players, self.dead_players):
+        for p in itertools.chain(self.players, self.dead_players, self.gifts):
             p.update()
             
         if self.count > 1.0:
@@ -296,8 +350,8 @@ class Game(Screen):
             s.set_winner(self.players[0].name if self.players else None)
             self.manager.current = 'game_over'
         
-        #if random.random() > 0.990:
-        #    self.create_gift()
+        if random.random() > 0.995:
+            self.create_gift()
             
         #wall collisions
         
@@ -517,9 +571,12 @@ class GameOver(Screen):
         
         self.winner = "%s Wins!" % winner if winner else 'TIE :('
         
-    
+Config.set('graphics', 'fullscreen', 1)
 
 class SkyBombersApp(App):
+    
+    
+    
     def on_start(self):
         import cProfile
         self.profile = cProfile.Profile()
@@ -535,6 +592,7 @@ class SkyBombersApp(App):
         def on_key_up(window, keycode, *rest):
             KEYS[keycode] = False
         Window.bind(on_key_down=on_key_down, on_key_up=on_key_up)
+        Window.screen = 1
         GlobalStuff.init()
         
         config= ConfigScreen(name='config')

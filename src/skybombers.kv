@@ -10,8 +10,13 @@
     #size: 60, 60
     
             
-            
-    
+<SpeedGift>:
+    Image:
+        size: root.size
+        source: "imgs/speedometer-32.png"
+        strech: True
+        keep_ratio: False
+        
 <Player>:
     canvas.before:
         Color:
@@ -37,12 +42,12 @@
 <Game>:
     area: area
     
-    Image:
-        id: background
-        size: root.size
-        source: random.choice(["imgs/Clouds_RJ1_2613.jpg"])
-        strech: True
-        keep_ratio: False            
+#     Image:
+#         id: background
+#         size: root.size
+#         source: random.choice(["imgs/Clouds_RJ1_2613.jpg"])
+#         strech: True
+#         keep_ratio: False            
     FloatLayout:
         id: area
     Label:
