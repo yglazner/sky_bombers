@@ -211,9 +211,12 @@ class Player(Sprite):
 
 class BaseGift(Sprite):
     
+    src = StringProperty("")
+    
     def __init__(self, game, **kwargs):
         super(BaseGift, self).__init__(game, **kwargs)
-    
+        self.src = self.SOURCE
+        
     def update(self):
         p = self.game.check_player_collision(self)
         if p:
@@ -222,14 +225,14 @@ class BaseGift(Sprite):
             return
         super(BaseGift, self).update()
 
-
     def apply_gift(self, player):
         raise NotImplementedError("BaseGift is not a real Gift :)")
 
 class SpeedGift(BaseGift):
     
-    def apply_gift(self, player):
-        
+    SOURCE = "imgs/speedometer-32.png"
+    
+    def apply_gift(self, player):        
         player.speed *= 1.3
         print("player %s thrust is %d" % (player.name, player.thrust))
 
@@ -309,22 +312,23 @@ class Game(Screen):
     def create_gift(self):
         p = random.choice(['top', 'buttom', 'left', 'right'])
         stuff = {'size_hint': (0.03, 0.03)}
+        speed = random.choice([2,3, 3.5, 4,5])
         if p in ['left', 'right']:
             y = (GlobalStuff.top - 20) * random.random() + 10
             if p == 'left':
                 x = 0
-                stuff['velocity_x'] = 5
+                stuff['velocity_x'] = 1* speed
             else:
                 x = GlobalStuff.right
-                stuff['velocity_x'] = -5
+                stuff['velocity_x'] = -1*speed
         else:
             x = (GlobalStuff.right - 20) * random.random() + 10
             if p == 'top':
                 y = GlobalStuff.top
-                stuff['velocity_y'] = -5
+                stuff['velocity_y'] = -1*speed
             else:
                 y = 0
-                stuff['velocity_y'] = 5
+                stuff['velocity_y'] = 1*speed
     
         gift = gen_gift(self, center_x=x, center_y=y, **stuff)
         self.area.add_widget(gift)
