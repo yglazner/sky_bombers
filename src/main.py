@@ -42,11 +42,7 @@ class Sprite(Scatter):
     source = StringProperty('')
     radius = NumericProperty(0.0)
     thrust =  NumericProperty(0.0)
-    ShotSound = [SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-01.mp3'),SoundLoader.load('Music/shots/gunshot-02.mp3'),SoundLoader.load('Music/shots/gunshot-03.mp3'),
-                SoundLoader.load('Music/shots/gunshot-04.mp3'),SoundLoader.load('Music/shots/gunshot-05.mp3'),SoundLoader.load('Music/shots/gunshot-06.mp3'),SoundLoader.load('Music/shots/gunshot-07.mp3'),
-                SoundLoader.load('Music/shots/gunshot-08.mp3'),SoundLoader.load('Music/shots/gunshot-09.mp3')]
-    for sound in ShotSound:
-        sound.volume = 0.5
+    
     
         
     def __init__(self, game, velocity_x=0.0, velocity_y=0.0,
@@ -109,6 +105,18 @@ class Bullet(Sprite):
     
     blow = NumericProperty(1.0)
     damage = NumericProperty(1)
+    
+    bullet_sounds = [SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-01.mp3'),SoundLoader.load('Music/shots/gunshot-02.mp3'),SoundLoader.load('Music/shots/gunshot-03.mp3'),
+                SoundLoader.load('Music/shots/gunshot-04.mp3'),SoundLoader.load('Music/shots/gunshot-05.mp3'),SoundLoader.load('Music/shots/gunshot-06.mp3'),SoundLoader.load('Music/shots/gunshot-07.mp3'),
+                SoundLoader.load('Music/shots/gunshot-08.mp3'),SoundLoader.load('Music/shots/gunshot-09.mp3')
+                ]* 10
+    random.shuffle(bullet_sounds)
+    
+    for sound in bullet_sounds:
+        sound.volume = 0.5
+        
+    next_bullet_sound = itertools.cycle(bullet_sounds)
+        
     def __init__(self, game, owner, **kw):
         super(Bullet, self).__init__(game, **kw)     
         self.rotation = owner.rotation   
@@ -124,13 +132,14 @@ class Bullet(Sprite):
         
         self.counter = 0
         
-        random.choice(self.ShotSound).play()
+        
         
         
     def update(self):
         if self.first:
             self.center = self.owner.center
             self.first=0
+            next(self.next_bullet_sound).play()
         self.counter +=1
         bingo = self.game.check_player_collision(self, [self.owner])
         if bingo and self.active:
@@ -253,12 +262,16 @@ def gen_gift(*args, **kw):
 
 class Game(Screen):
     area = ObjectProperty(None)
-    theme = random.choice(['Music/levels/35-battle-1-hurry.mp3','Music/levels/19-battle-theme-1.mp3', 'Music/levels/20-battle-theme-2.mp3',  'Music/levels/36-battle-2-hurry.mp3'])
-    backgroundSound = SoundLoader.load(theme)
+    
+    
     
     def __init__(self, **kw):
         Screen.__init__(self, **kw)
         self.player_nums = []
+        theme = random.choice(['Music/levels/35-battle-1-hurry.mp3',
+                               'Music/levels/19-battle-theme-1.mp3', 'Music/levels/20-battle-theme-2.mp3', 
+                               'Music/levels/36-battle-2-hurry.mp3'])
+        self.background_sound = SoundLoader.load(theme) 
         
         
     def setup(self, players):
@@ -281,8 +294,8 @@ class Game(Screen):
             self.area.add_widget(p)
             
         
-        self.backgroundSound.loop = True
-        self.backgroundSound.play()
+        self.background_sound.loop = True
+        self.background_sound.play()
         self.label = Label(text="FPS: ?", pos=(200,200)) 
         self.area.add_widget(self.label)
         self._loop = Clock.schedule_interval(self._update, 1.0/36)
@@ -292,7 +305,7 @@ class Game(Screen):
     def on_leave(self, *args):
         Screen.on_leave(self, *args)
         self._loop.cancel()
-        self.backgroundSound.stop()
+        self.background_sound.stop()
 
     def add_bullet(self, bullet):
         self.bullets.append(bullet)
