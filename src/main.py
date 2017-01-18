@@ -26,6 +26,7 @@ import os
 from kivy.uix.settings import SettingItem
 from kivyoav.autosized_label import AutoSizedLabel
 from kivy.uix.popup import Popup
+from kivy.core.audio import SoundLoader
 import json
 
 sm = ScreenManager()
@@ -41,7 +42,13 @@ class Sprite(Scatter):
     source = StringProperty('')
     radius = NumericProperty(0.0)
     thrust =  NumericProperty(0.0)
+    ShotSound = [SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-01.mp3'),SoundLoader.load('Music/shots/gunshot-02.mp3'),SoundLoader.load('Music/shots/gunshot-03.mp3'),
+                SoundLoader.load('Music/shots/gunshot-04.mp3'),SoundLoader.load('Music/shots/gunshot-05.mp3'),SoundLoader.load('Music/shots/gunshot-06.mp3'),SoundLoader.load('Music/shots/gunshot-07.mp3'),
+                SoundLoader.load('Music/shots/gunshot-08.mp3'),SoundLoader.load('Music/shots/gunshot-09.mp3')]
+    for sound in ShotSound:
+        sound.volume = 0.5
     
+        
     def __init__(self, game, velocity_x=0.0, velocity_y=0.0,
                  **kwargs):
         self.game = game
@@ -116,6 +123,8 @@ class Bullet(Sprite):
         self.blow_rate = 2.0
         
         self.counter = 0
+        
+        random.choice(self.ShotSound).play()
         
         
     def update(self):
@@ -244,10 +253,13 @@ def gen_gift(*args, **kw):
 
 class Game(Screen):
     area = ObjectProperty(None)
+    theme = random.choice(['Music/levels/35-battle-1-hurry.mp3','Music/levels/19-battle-theme-1.mp3', 'Music/levels/20-battle-theme-2.mp3',  'Music/levels/36-battle-2-hurry.mp3'])
+    backgroundSound = SoundLoader.load(theme)
     
     def __init__(self, **kw):
         Screen.__init__(self, **kw)
         self.player_nums = []
+        
         
     def setup(self, players):
         self.player_nums = players
@@ -269,8 +281,8 @@ class Game(Screen):
             self.area.add_widget(p)
             
         
-        
-            
+        self.backgroundSound.loop = True
+        self.backgroundSound.play()
         self.label = Label(text="FPS: ?", pos=(200,200)) 
         self.area.add_widget(self.label)
         self._loop = Clock.schedule_interval(self._update, 1.0/36)
@@ -280,6 +292,7 @@ class Game(Screen):
     def on_leave(self, *args):
         Screen.on_leave(self, *args)
         self._loop.cancel()
+        self.backgroundSound.stop()
 
     def add_bullet(self, bullet):
         self.bullets.append(bullet)
