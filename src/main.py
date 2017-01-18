@@ -80,9 +80,9 @@ class Sprite(Scatter):
         return math.sqrt(a+b)
     
     
-    def collide(self, other):
+    def collide(self, other, area=0):
         d = self.distance(other)
-        if d < (self.radius+other.radius):
+        if d < (self.radius+other.radius+area):
             return 1
         
             
@@ -132,7 +132,9 @@ class Bullet(Sprite):
         
         self.counter = 0
         
-        
+    def hit_by(self, other):
+        self.active = False
+        self.counter = 40
         
         
     def update(self):
@@ -142,6 +144,7 @@ class Bullet(Sprite):
             next(self.next_bullet_sound).play()
         self.counter +=1
         bingo = self.game.check_player_collision(self, [self.owner])
+        
         if bingo and self.active:
             self.active = False
             bingo.hit_by(self)
@@ -157,14 +160,13 @@ class Bullet(Sprite):
             
         super(Bullet, self).update()
 
-class Player(Sprite):
-    
+class Player(Sprite):    
     lives = NumericProperty(5)
     
     def __init__(self, game, name, keys, **kw):
         super(Player, self).__init__(game, **kw)
-        self.velocity_x = 1.0 * math.cos(radians(self.rotation))
-        self.velocity_y = 1.0 * math.sin(radians(self.rotation))
+        self.velocity_x = 0.0 * math.cos(radians(self.rotation))
+        self.velocity_y = 0.0 * math.sin(radians(self.rotation))
         self.reload = 0
         self.keys = keys
         self.name = name
@@ -260,6 +262,36 @@ def gen_gift(*args, **kw):
     return random.choice(gift_types)(*args, **kw)
     
 
+class Planet(Sprite):
+    
+    color = ListProperty([1.0, 0.0, 0.0, 0.5])
+    def __init__(self, game, color, size_hint, pos_hint):
+        self.color = color
+        self.damage = 99
+        super(Planet, self).__init__(game, size_hint=size_hint, pos_hint=pos_hint)
+        
+    def update(self):
+        area = self.radius * 3
+        for obj in itertools.chain(self.game.players, self.game.bullets):
+            if obj.collide(self, area):
+                if obj.collide(self):
+                    obj.hit_by(self)
+                else:
+                    self._attract(obj)
+                    
+        
+    def _attract(self, obj):
+        diffx = obj.center_x - self.center_x
+        diffy = obj.center_y - self.center_y
+        speed = 0.20
+        ratio = float(abs(diffx)) / (abs(diffy)+abs(diffx))
+        speedx = speed * ratio
+        speedy = speed * (1-ratio)
+        print(speedx, speedy)
+        obj.velocity_x -= speedx if diffx > 0 else -speedx
+        obj.velocity_y -= speedy if diffy > 0 else -speedy
+        
+
 class Game(Screen):
     area = ObjectProperty(None)
     
@@ -274,8 +306,9 @@ class Game(Screen):
         self.background_sound = SoundLoader.load(theme) 
         
         
-    def setup(self, players):
+    def setup(self, players, level):
         self.player_nums = players
+        self.level = level
         
     
         
@@ -284,6 +317,7 @@ class Game(Screen):
         for w in list(self.area.children):
             self.area.remove_widget(w)
         self.players = []
+        self.planets = []
         self.gifts = []
         self.dead_players = []
         self.bullets = []
@@ -292,6 +326,15 @@ class Game(Screen):
             p = Player(self, **p)
             self.players.append(p)
             self.area.add_widget(p)
+            
+        for planet in self.level['planets']:
+            p = Planet(self, 
+                       color=planet['color'],
+                       size_hint=planet['size'], 
+                       pos_hint={'center_x': planet['x'],
+                                 'center_y': planet['y']})
+            self.area.add_widget(p)
+            self.planets.append(p)
             
         
         self.background_sound.loop = True
@@ -331,6 +374,8 @@ class Game(Screen):
                 if p not in filter:
                     return p
                 
+    
+                
     def remove_gift(self, gift):
         self.gifts.remove(gift)
         self.area.remove_widget(gift)
@@ -367,6 +412,8 @@ class Game(Screen):
         random.shuffle(self.players)
         for b in self.bullets:
             b.update()
+        for p in self.planets:
+            p.update()
         
         for p in itertools.chain(self.players, self.dead_players, self.gifts):
             p.update()
@@ -566,13 +613,19 @@ class GameSetup(Screen):
     
     def __init__(self, **kw):
         super(GameSetup, self).__init__(**kw)
+        self.level = 1
         
     def on_enter(self, *args):
         Screen.on_enter(self, *args)
         self.event = Clock.schedule_interval(self._tick, 0.02)
     
     def go(self):
-        self.manager.get_screen('game').setup(players=list(self.players))
+        with open('levels/%02d.json' % self.level) as f:
+            level = json.load(f)
+        
+        self.manager.get_screen('game'
+                ).setup(level=level,
+                       players=list(self.players))
         self.manager.current = 'game'
     
     def on_leave(self, *args):

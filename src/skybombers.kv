@@ -18,6 +18,17 @@
         strech: True
         keep_ratio: False
         
+<Planet>:
+    
+    canvas.before:
+        Color:
+            rgba: self.color
+        Line:
+            circle: (self.size[0]/2, self.size[1]/2,  (self.size[0]+self.size[1]) / 4.0)
+            
+        
+        
+        
 <Player>:
     canvas.before:
         Color:
