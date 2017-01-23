@@ -256,7 +256,16 @@ class SpeedGift(BaseGift):
         player.speed *= 1.3
         print("player %s thrust is %d" % (player.name, player.thrust))
 
-gift_types = [SpeedGift, ]
+class LivesGift(BaseGift):
+    
+    SOURCE = "imgs/heart.png"
+    
+    def apply_gift(self, player):
+        print("player %s had %d lives" % (player.name, player.lives))
+        player.lives += 1
+        print("and now he has %d lives" % (player.lives))
+        
+gift_types = [SpeedGift, LivesGift, ]
 
 def gen_gift(*args, **kw):
     return random.choice(gift_types)(*args, **kw)
