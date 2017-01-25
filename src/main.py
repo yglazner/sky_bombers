@@ -119,8 +119,8 @@ class Bullet(Sprite):
     def __init__(self, game, owner, direction, **kw):
         super(Bullet, self).__init__(game, **kw)     
         self.rotation = direction#owner.rotation   
-        self.velocity_x = owner.velocity_x + math.cos(radians(self.rotation)) * 8
-        self.velocity_y = owner.velocity_y +  math.sin(radians(self.rotation)) * 8
+        self.velocity_x = owner.velocity_x + math.cos(radians(self.rotation)) * 4
+        self.velocity_y = owner.velocity_y +  math.sin(radians(self.rotation)) * 4
         
         self.active = True
         self.first = 1
@@ -128,7 +128,7 @@ class Bullet(Sprite):
         
         self.center = -200, -200
         self.blow_rate = 2.0
-        
+        self.max_counter = 100
         self.counter = 0
         
     def hit_by(self, other):
@@ -148,7 +148,7 @@ class Bullet(Sprite):
             self.active = False
             bingo.hit_by(self)
             self.counter = 25
-        if self.counter > 50:
+        if self.counter > self.max_counter:
             self.game.remove_bullet(self)
             self.active = False
         if not self.active:
@@ -175,16 +175,16 @@ class Player(Sprite):
         
 
     def check_wall_collision(self):
-        r = self.radius
+        r = self.radius - 5
         print(r, self.size, self.center)
         x, y = self.center
-        if x - r < 0:
+        if x  < 0:
             return True
-        if x + r > GlobalStuff.right:
+        if x  > GlobalStuff.right:
             return True
-        if y + r > GlobalStuff.top:
+        if y > GlobalStuff.top:
             return True
-        if y-r < 0:
+        if y < 0:
             return True
             
 
