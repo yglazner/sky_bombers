@@ -171,7 +171,7 @@ class Player(Sprite):
         self.keys = keys
         self.name = name
         self.speed = 0.2
-        self.triple_bullet = False
+        self.bullets = 1
         
 
     def check_wall_collision(self):
@@ -227,12 +227,10 @@ class Player(Sprite):
         if self.reload > 0:
             return
         self.reload = 10
-        bullet = Bullet(self.game, self, self.rotation)        
-        self.game.add_bullet(bullet)
-        if (self.triple_bullet == True):
-            bullet = Bullet(self.game, self, self.rotation+10)        
-            self.game.add_bullet(bullet)
-            bullet = Bullet(self.game, self, self.rotation-10)        
+        d  = self.rotation
+        
+        for i in range(self.bullets):
+            bullet = Bullet(self.game, self, d + (i*8*((i%2) or -1)))
             self.game.add_bullet(bullet)
 
 class BaseGift(Sprite):
@@ -271,15 +269,15 @@ class LivesGift(BaseGift):
         player.lives += 1
         print("and now he has %d lives" % (player.lives))
         
-class TripleShotGift(BaseGift):
+class ExtraShotGift(BaseGift):
 
     SOURCE = "imgs/triple_bullet.png"
     
     def apply_gift(self, player):
-        player.triple_bullet = True
-        print("player %s has triple shot from now on" % (player.name))
+        player.bullets += 1
+        
 
-gift_types = [SpeedGift, LivesGift, TripleShotGift, ]
+gift_types = [SpeedGift, LivesGift, ExtraShotGift, ]
 
 def gen_gift(*args, **kw):
     return random.choice(gift_types)(*args, **kw)
@@ -405,7 +403,7 @@ class Game(Screen):
     def create_gift(self):
         p = random.choice(['top', 'buttom', 'left', 'right'])
         stuff = {'size_hint': (0.03, 0.03)}
-        speed = random.choice([2,3, 3.5, 4,5])
+        speed = random.choice([1, 2, 3, 3.5, 4,5])
         if p in ['left', 'right']:
             y = (GlobalStuff.top - 20) * random.random() + 10
             if p == 'left':
