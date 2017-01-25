@@ -106,9 +106,9 @@ class Bullet(Sprite):
     blow = NumericProperty(1.0)
     damage = NumericProperty(1)
     
-    bullet_sounds = [SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-01.mp3'),SoundLoader.load('Music/shots/gunshot-02.mp3'),SoundLoader.load('Music/shots/gunshot-03.mp3'),
-                SoundLoader.load('Music/shots/gunshot-04.mp3'),SoundLoader.load('Music/shots/gunshot-05.mp3'),SoundLoader.load('Music/shots/gunshot-06.mp3'),SoundLoader.load('Music/shots/gunshot-07.mp3'),
-                SoundLoader.load('Music/shots/gunshot-08.mp3'),SoundLoader.load('Music/shots/gunshot-09.mp3')
+    bullet_sounds = [SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3'),
+                SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3'),
+                SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3')
                 ]* 10
     random.shuffle(bullet_sounds)
     
@@ -117,9 +117,9 @@ class Bullet(Sprite):
         
     next_bullet_sound = itertools.cycle(bullet_sounds)
         
-    def __init__(self, game, owner, **kw):
+    def __init__(self, game, owner, direction, **kw):
         super(Bullet, self).__init__(game, **kw)     
-        self.rotation = owner.rotation   
+        self.rotation = direction#owner.rotation   
         self.velocity_x = owner.velocity_x + math.cos(radians(self.rotation)) * 8
         self.velocity_y = owner.velocity_y +  math.sin(radians(self.rotation)) * 8
         
@@ -171,6 +171,7 @@ class Player(Sprite):
         self.keys = keys
         self.name = name
         self.speed = 0.2
+        self.triple_bullet = False
         
 
     def check_wall_collision(self):
@@ -226,8 +227,13 @@ class Player(Sprite):
         if self.reload > 0:
             return
         self.reload = 10
-        bullet = Bullet(self.game, self)
+        bullet = Bullet(self.game, self, self.rotation)        
         self.game.add_bullet(bullet)
+        if (self.triple_bullet == True):
+            bullet = Bullet(self.game, self, self.rotation+10)        
+            self.game.add_bullet(bullet)
+            bullet = Bullet(self.game, self, self.rotation-10)        
+            self.game.add_bullet(bullet)
 
 class BaseGift(Sprite):
     
@@ -265,7 +271,15 @@ class LivesGift(BaseGift):
         player.lives += 1
         print("and now he has %d lives" % (player.lives))
         
-gift_types = [SpeedGift, LivesGift, ]
+class TripleShotGift(BaseGift):
+
+    SOURCE = "imgs/triple_bullet.png"
+    
+    def apply_gift(self, player):
+        player.triple_bullet = True
+        print("player %s has triple shot from now on" % (player.name))
+
+gift_types = [SpeedGift, LivesGift, TripleShotGift, ]
 
 def gen_gift(*args, **kw):
     return random.choice(gift_types)(*args, **kw)
