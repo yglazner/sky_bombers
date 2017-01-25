@@ -310,7 +310,6 @@ class Planet(Sprite):
         ratio = float(abs(diffx)) / (abs(diffy)+abs(diffx))
         speedx = speed * ratio
         speedy = speed * (1-ratio)
-        print(speedx, speedy)
         obj.velocity_x -= speedx if diffx > 0 else -speedx
         obj.velocity_y -= speedy if diffy > 0 else -speedy
         
