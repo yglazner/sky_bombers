@@ -106,10 +106,9 @@ class Bullet(Sprite):
     blow = NumericProperty(1.0)
     damage = NumericProperty(1)
     
-    bullet_sounds = [SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3'),
-                SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3'),
-                SoundLoader.load('Music/shots/gunshot-00.mp3'),SoundLoader.load('Music/shots/gunshot-00.mp3')
-                ]* 10
+    bullet_sounds = [SoundLoader.load('Music/shots/gunshot-00.mp3')
+                     for _ in range(50)
+                ]
     random.shuffle(bullet_sounds)
     
     for sound in bullet_sounds:
@@ -168,6 +167,7 @@ class Player(Sprite):
         self.velocity_x = 0.0 * math.cos(radians(self.rotation))
         self.velocity_y = 0.0 * math.sin(radians(self.rotation))
         self.reload = 0
+        self.reload_time = 20
         self.keys = keys
         self.name = name
         self.speed = 0.2
@@ -226,7 +226,7 @@ class Player(Sprite):
     def fire(self):
         if self.reload > 0:
             return
-        self.reload = 10
+        self.reload = self.reload_time
         d  = self.rotation
         
         for i in range(self.bullets):
@@ -403,7 +403,7 @@ class Game(Screen):
     def create_gift(self):
         p = random.choice(['top', 'buttom', 'left', 'right'])
         stuff = {'size_hint': (0.03, 0.03)}
-        speed = random.choice([1, 2, 3, 3.5, 4,5])
+        speed = random.choice([1, 2, 3])
         if p in ['left', 'right']:
             y = (GlobalStuff.top - 20) * random.random() + 10
             if p == 'left':
