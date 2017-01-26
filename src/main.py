@@ -71,6 +71,9 @@ class Sprite(Scatter):
         self.y += self.velocity_y
         self.x += self.velocity_x
         
+        self.velocity_x *= 0.998
+        self.velocity_y *= 0.998
+        
         
 
     def distance(self, other):
