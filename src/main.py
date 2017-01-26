@@ -33,7 +33,8 @@ sm = ScreenManager()
 
 KEYS = defaultdict(lambda: None)
 
-Config.full_screen = 1
+#blah, olny works on windows... :L(
+
 
 class Sprite(Scatter):
    
@@ -186,7 +187,7 @@ class Player(Sprite):
 
     def check_wall_collision(self):
         r = self.radius - 5
-        print(r, self.size, self.center)
+   
         x, y = self.center
         if x  < 0:
             return True
@@ -765,7 +766,7 @@ class SkyBombersApp(App):
         def on_key_up(window, keycode, *rest):
             KEYS[keycode] = False
         Window.bind(on_key_down=on_key_down, on_key_up=on_key_up)
-        Window.screen = 1
+        
         GlobalStuff.init()
         
         config= ConfigScreen(name='config')
@@ -777,8 +778,13 @@ class SkyBombersApp(App):
         sm.add_widget(GameOver(name='game_over'))
         sm.add_widget(Menu(name='menu'))
         sm.current = 'menu'
+        Clock.schedule_once(lambda dt: GlobalStuff.init(), 5)
         return sm
 
 if __name__ == '__main__':
-    
+    #Window.size = screensize
+    Window.maxfps = 36
+    #Config.fullscreen = 1
+    #Config.set('graphics', 'fullscreen', 'auto')
+    Window.fullscreen = 'auto'
     SkyBombersApp().run()
