@@ -356,7 +356,7 @@ class Game(Screen):
         self.bullets = []
         for p, s in zip(ConfigScreen.players, self.players_setup):
             if not s['play']: continue
-            p = Player(self, team=s['team'], **p)
+            p = Player(self, team=s['team_name'], **p)
             self.players.append(p)
             self.area.add_widget(p)
             
@@ -653,13 +653,25 @@ class Menu(Screen):
 class GameSetup(Screen):
     
     bling = StringProperty(' ')
+    level = NumericProperty(1)
+    
+    team2name = {0: "",
+                 1: "N00Bly",
+                 2: "Cheesy",}
     
     def __init__(self, **kw):
         self.players = [{'play': False,
-                         'team': 0} for _ in range(6)]
+                         'team': 0}
+                        for _ in range(6)]
         super(GameSetup, self).__init__(**kw)
         
         self.level = 1
+        
+    def level_click(self):
+        self.level += 1
+        good = os.path.exists("./levels/%02d.json" % self.level)
+        if not good:
+            self.level = 1
         
     def on_enter(self, *args):
         Screen.on_enter(self, *args)
@@ -672,14 +684,24 @@ class GameSetup(Screen):
             s = 'Player%d' % num
             team = p['team']
             if team:
-                s += " Team %s" % (['N00Bly', "Cheesy"][team-1])
+                s += " Team %s" % self.team2name[team]
             return s
         return " "
     
     def go(self):
+        teams = {p['team'] for p in self.players if p['play']}
+        print(teams)
+        if 0 in teams and len(teams)> 1:
+            return
+        if 0 not in teams and len(teams)!=2:
+            print(teams)
+            return
+        if sum(p['play'] for p in self.players) < 2:
+            return
         with open('levels/%02d.json' % self.level) as f:
             level = json.load(f)
-        
+        for p in self.players:
+            p['team_name'] = self.team2name[p['team']]
         self.manager.get_screen('game'
                 ).setup(level=level,
                        players=list(self.players))
