@@ -33,8 +33,6 @@ sm = ScreenManager()
 
 KEYS = defaultdict(lambda: None)
 
-#blah, olny works on windows... :L(
-
 
 class Sprite(Scatter):
    
@@ -186,7 +184,7 @@ class Player(Sprite):
         
 
     def check_wall_collision(self):
-        r = self.radius - 5
+        
    
         x, y = self.center
         if x  < 0:
@@ -695,7 +693,7 @@ class GameSetup(Screen):
         if 0 in teams and len(teams)> 1:
             return
         if 0 not in teams and len(teams)!=2:
-            print(teams)
+            
             return
         if sum(p['play'] for p in self.players) < 2:
             return
@@ -752,21 +750,41 @@ class SkyBombersApp(App):
     
     
     def on_start(self):
-        import cProfile
-        self.profile = cProfile.Profile()
-        self.profile.enable()
+        pass
+        #import cProfile
+        #self.profile = cProfile.Profile()
+        #self.profile.enable()
 
     def on_stop(self):
-        self.profile.disable()
-        self.profile.dump_stats('myapp.profile')
+        pass
+        #self.profile.disable()
+        #self.profile.dump_stats('myapp.profile')
     
-    def build(self):
+    def build(self, KEYS=KEYS):
         def on_key_down(window, keycode, *rest):
             KEYS[keycode] = True
         def on_key_up(window, keycode, *rest):
             KEYS[keycode] = False
+        def on_joy_axis(win, stickid, axisid, value):
+            
+            axes = (stickid+1)*1000 + axisid*10
+            if value:
+                if value > 0:
+                    KEYS[axes] = 1
+                else:
+                    KEYS[axes+1] = 1
+            else:
+                KEYS[axes] = KEYS[axes+1] = 0
+        def on_joy_button_down(_, joynum, btn):
+            k = (joynum+1) * 1000 + btn + 50
+            KEYS[k] = 1
+        def on_joy_button_up(_, joynum, btn):
+            k = (joynum+1) * 1000 + btn + 50
+            KEYS[k] = 0
         Window.bind(on_key_down=on_key_down, on_key_up=on_key_up)
-        
+        Window.bind(on_joy_axis=on_joy_axis)
+        Window.bind(on_joy_button_down=on_joy_button_down)
+        Window.bind(on_joy_button_up=on_joy_button_up)
         GlobalStuff.init()
         
         config= ConfigScreen(name='config')
