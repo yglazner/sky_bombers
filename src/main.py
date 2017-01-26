@@ -32,6 +32,15 @@ import json
 sm = ScreenManager()
 
 KEYS = defaultdict(lambda: None)
+import sys
+
+
+#very ugly fix for the sdl2.joystick issue ...
+del sys.modules['sdl2']
+from sdl2 import joystick
+for joy_i in range(joystick.SDL_NumJoysticks()):
+    joystick.SDL_JoystickOpen(joy_i)
+
 
 
 class Sprite(Scatter):
@@ -769,7 +778,6 @@ class SkyBombersApp(App):
         def on_key_up(window, keycode, *rest):
             KEYS[keycode] = False
         def on_joy_axis(win, stickid, axisid, value):
-            
             axes = (stickid+1)*1000 + axisid*10
             if value:
                 if value > 0:
@@ -779,7 +787,9 @@ class SkyBombersApp(App):
             else:
                 KEYS[axes] = KEYS[axes+1] = 0
         def on_joy_button_down(_, joynum, btn):
+            
             k = (joynum+1) * 1000 + btn + 50
+            print(k)
             KEYS[k] = 1
         def on_joy_button_up(_, joynum, btn):
             k = (joynum+1) * 1000 + btn + 50
@@ -807,5 +817,5 @@ if __name__ == '__main__':
     Window.maxfps = 36
     #Config.fullscreen = 1
     #Config.set('graphics', 'fullscreen', 'auto')
-    Window.fullscreen = 'auto'
+    #Window.fullscreen = 'auto'
     SkyBombersApp().run()
