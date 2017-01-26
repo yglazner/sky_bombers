@@ -169,6 +169,20 @@ class Bullet(Sprite):
             self.blow_rate *= 0.90
             
         super(Bullet, self).update()
+        
+class HomingMissle(Bullet):
+    
+    
+    
+    def update(self):
+        speed = 0.5
+        Bullet.update(self)
+        p = self.game.check_player_collision(self, [self.owner], self.owner.radius*10)
+        if p:
+            
+            self.velocity_x += speed if p.center_x > self.center_x else -speed
+            self.velocity_y += speed if p.center_y > self.center_y else -speed
+            
 
 class Player(Sprite):    
     lives = NumericProperty(5)
@@ -193,6 +207,7 @@ class Player(Sprite):
         self.team = team
         self.speed = 0.2
         self.bullets = 1
+        self.special_bullets = []
         
 
     def check_wall_collision(self):
@@ -252,9 +267,12 @@ class Player(Sprite):
             return
         self.reload = self.reload_time
         d  = self.rotation
-        
+        sb = list(self.special_bullets)
         for i in range(self.bullets):
-            bullet = Bullet(self.game, self, d + (i*8*((i%2) or -1)))
+            if sb:
+                bullet = sb.pop()(self.game, self, d + (i*8*((i%2) or -1)))
+            else:
+                bullet = Bullet(self.game, self, d + (i*8*((i%2) or -1)))
             self.game.add_bullet(bullet)
 
 class BaseGift(Sprite):
@@ -300,8 +318,15 @@ class ExtraShotGift(BaseGift):
     def apply_gift(self, player):
         player.bullets += 1
         
+class HomingMissleGift(BaseGift):
+    
+    SOURCE = 'imgs/homing_missle_gift.png'
+    
+    def apply_gift(self, player):
+        player.special_bullets.append(HomingMissle)
+        
 
-gift_types = [SpeedGift, LivesGift, ExtraShotGift, ]
+gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift]
 
 def gen_gift(*args, **kw):
     return random.choice(gift_types)(*args, **kw)
@@ -412,10 +437,10 @@ class Game(Screen):
         self.dead_players.remove(player)
         self.remove_widget(player)
 
-    def check_player_collision(self, obj, filter=[]):
+    def check_player_collision(self, obj, filter=[], area=0):
         
         for p in self.players:
-            if p.collide(obj):
+            if p.collide(obj, area):
                 if p not in filter:
                     return p
                 
@@ -817,5 +842,5 @@ if __name__ == '__main__':
     Window.maxfps = 36
     #Config.fullscreen = 1
     #Config.set('graphics', 'fullscreen', 'auto')
-    #Window.fullscreen = 'auto'
+    Window.fullscreen = 'auto'
     SkyBombersApp().run()
