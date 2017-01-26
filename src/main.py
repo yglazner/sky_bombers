@@ -171,7 +171,7 @@ class Player(Sprite):
     random.shuffle(hit_sounds)
     next_dead_sound = itertools.cycle(dead_sounds)
     next_hit_sound = itertools.cycle(hit_sounds)
-    def __init__(self, game, name, keys, **kw):
+    def __init__(self, game, name, team, keys, **kw):
         super(Player, self).__init__(game, **kw)
         self.velocity_x = 0.0 * math.cos(radians(self.rotation))
         self.velocity_y = 0.0 * math.sin(radians(self.rotation))
@@ -179,6 +179,7 @@ class Player(Sprite):
         self.reload_time = 20
         self.keys = keys
         self.name = name
+        self.team = team
         self.speed = 0.2
         self.bullets = 1
         
@@ -339,7 +340,7 @@ class Game(Screen):
         
         
     def setup(self, players, level):
-        self.player_nums = players
+        self.players_setup = players
         self.level = level
         
     
@@ -353,9 +354,9 @@ class Game(Screen):
         self.gifts = []
         self.dead_players = []
         self.bullets = []
-        for i, p in enumerate(ConfigScreen.players, start=1):
-            if i not in self.player_nums: continue
-            p = Player(self, **p)
+        for p, s in zip(ConfigScreen.players, self.players_setup):
+            if not s['play']: continue
+            p = Player(self, team=s['team'], **p)
             self.players.append(p)
             self.area.add_widget(p)
             
@@ -370,10 +371,11 @@ class Game(Screen):
             
         
         self.background_sound.loop = True
+        self.background_sound.volume = 0.5
         self.background_sound.play()
         self.label = Label(text="FPS: ?", pos=(200,200)) 
         self.area.add_widget(self.label)
-        self._loop = Clock.schedule_interval(self._update, 1.0/36)
+        self._loop = Clock.schedule_interval(self._update, 1.0/25)
         self.count = 0.0
         self.frames_count = 1
         
@@ -439,6 +441,7 @@ class Game(Screen):
         
     
     def _update(self, dt=None, keys= KEYS):
+   
         self.count += dt
         self.frames_count += 1
         random.shuffle(self.players)
@@ -459,12 +462,20 @@ class Game(Screen):
             s.set_winner(self.players[0].name if self.players else None)
             self.manager.current = 'game_over'
         
+        teams_left = set(p.team for p in self.players if p.team)
+        if len(teams_left) == 1:
+            winner = 'Team %s' % (self.players[0].team)
+            self.gameover(winner)
+        
         if random.random() > 0.995:
             self.create_gift()
             
         #wall collisions
         
-                
+    def gameover(self, winner):
+        s = self.manager.get_screen('game_over')
+        s.set_winner(winner)
+        self.manager.current = 'game_over'           
 
 
 class ButtonPop(Popup):
@@ -641,15 +652,29 @@ class Menu(Screen):
 
 class GameSetup(Screen):
     
-    players = ListProperty([])
+    bling = StringProperty(' ')
     
     def __init__(self, **kw):
+        self.players = [{'play': False,
+                         'team': 0} for _ in range(6)]
         super(GameSetup, self).__init__(**kw)
+        
         self.level = 1
         
     def on_enter(self, *args):
         Screen.on_enter(self, *args)
         self.event = Clock.schedule_interval(self._tick, 0.02)
+    
+    def get_player_text(self, num):
+        
+        p = self.players[num-1]
+        if p['play']:
+            s = 'Player%d' % num
+            team = p['team']
+            if team:
+                s += " Team %s" % (['N00Bly', "Cheesy"][team-1])
+            return s
+        return " "
     
     def go(self):
         with open('levels/%02d.json' % self.level) as f:
@@ -663,16 +688,27 @@ class GameSetup(Screen):
     def on_leave(self, *args):
         Screen.on_leave(self, *args)
         self.event.cancel()
-        self.players = []
+
     
     def _tick(self, dt=None):
-        fire2player = [(p['keys']['fire'], i) for i, p in enumerate(ConfigScreen.players, start=1)]
-        
-        players = list(self.players)
-        for k, i in fire2player:
-            if KEYS[k] and i not in players:
-                players.append(i)
-        self.players = players    
+        fire2player = [(p['keys']['fire'], self.players[i-1]) 
+                       for i, p in enumerate(ConfigScreen.players, start=1)]
+                
+        for k, p in fire2player:
+            if KEYS[k]:
+                KEYS[k] = 0
+                if not p['play']:
+                    p['play'] = True
+                else:
+                    if p['team'] == 2:
+                        p['team'] = 0
+                        p['play'] = False
+                    else:
+                        p['team'] += 1
+                    
+                    
+       
+        self.bling = self.bling * 2 if len(self.bling)<10 else "b"
         
         
 

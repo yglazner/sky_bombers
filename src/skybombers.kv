@@ -86,25 +86,26 @@
         on_close: root.save()
 
 <GameSetup>:
-    players: []
+    bling: " "
     BoxLayout:
         orientation:  'vertical'
         AutoSizedLabel:
-            text: "Player 1" if 1 in root.players else ''
+            text: root.bling and root.get_player_text(1) or root.bling
         AutoSizedLabel:
-            text: "Player 2" if 2 in root.players else ''
+            text: root.bling and root.get_player_text(2) or root.bling
         AutoSizedLabel:
-            text: "Player 3" if 3 in root.players else ''
+            text: root.bling and root.get_player_text(3) or root.bling
         AutoSizedLabel:
-            text: "Player 4" if 4 in root.players else ''
+            text: root.bling and root.get_player_text(4) or root.bling
         AutoSizedLabel:
-            text: "Player 5" if 5 in root.players else ''
+            text: root.bling and root.get_player_text(5) or root.bling
         AutoSizedLabel:
-            text: "Player 6" if 6 in root.players else ''            
+            text: root.bling and root.get_player_text(6) or root.bling         
         MyButton:
             button_text: "Go"
             background_color: (0.1,0.8,0,1)
             on_release: root.go()
+            
             
 <GameOver>:
     winner: 'blah'
