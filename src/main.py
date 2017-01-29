@@ -324,9 +324,25 @@ class HomingMissleGift(BaseGift):
     
     def apply_gift(self, player):
         player.special_bullets.append(HomingMissle)
-        
 
-gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift]
+class FasterReloadGift(BaseGift):
+    SOURCE = "imgs/ammo.png"
+
+    def apply_gift(self, player):
+        print("player %s need %d ms for reload" % (player.name, player.reload_time))
+        player.reload_time /= 2
+        print("and now he needs only %d ms" % (player.reload_time))
+
+class SlowerReloadGift(BaseGift):
+    SOURCE = "imgs/skull.png"
+
+    def apply_gift(self, player):
+        print("player %s need %d ms for reload" % (player.name, player.reload_time))
+        player.reload_time *= 2
+        print("and now he needs %d ms MUHAHAHA" % (player.reload_time))
+
+
+gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift, FasterReloadGift, SlowerReloadGift]
 
 def gen_gift(*args, **kw):
     return random.choice(gift_types)(*args, **kw)
@@ -842,5 +858,5 @@ if __name__ == '__main__':
     Window.maxfps = 36
     #Config.fullscreen = 1
     #Config.set('graphics', 'fullscreen', 'auto')
-    Window.fullscreen = 'auto'
+    #Window.fullscreen = 'auto'
     SkyBombersApp().run()
