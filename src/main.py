@@ -116,17 +116,7 @@ class Bullet(Sprite):
     
     blow = NumericProperty(1.0)
     damage = NumericProperty(1)
-    
-    bullet_sounds = [SoundLoader.load('Music/shots/gunshot-00.mp3')
-                     for _ in range(50)
-                ]
-    random.shuffle(bullet_sounds)
-    
-    for sound in bullet_sounds:
-        sound.volume = 0.5
-        
-    next_bullet_sound = itertools.cycle(bullet_sounds)
-        
+
     def __init__(self, game, owner, direction, **kw):
         super(Bullet, self).__init__(game, **kw)     
         self.rotation = direction#owner.rotation   
@@ -151,7 +141,7 @@ class Bullet(Sprite):
         if self.first:
             self.center = self.owner.center
             self.first=0
-            next(self.next_bullet_sound).play()
+            #next(self.next_bullet_sound).play()
         self.counter +=1
         bingo = self.game.check_player_collision(self, [self.owner])
         
@@ -193,9 +183,15 @@ class Player(Sprite):
                      
     dead_sounds = [SoundLoader.load('Music/shots/dead.mp3')
                      for _ in range(5)]
+    fire_sounds = [SoundLoader.load('Music/shots/gunshot-00.mp3')
+                     for _ in range(50)]
+    random.shuffle(fire_sounds)
+    for sound in fire_sounds:
+        sound.volume = 0.5
     random.shuffle(hit_sounds)
     next_dead_sound = itertools.cycle(dead_sounds)
     next_hit_sound = itertools.cycle(hit_sounds)
+    next_fire_sound = itertools.cycle(fire_sounds)
     def __init__(self, game, name, team, keys, **kw):
         super(Player, self).__init__(game, **kw)
         self.velocity_x = 0.0 * math.cos(radians(self.rotation))
@@ -266,6 +262,7 @@ class Player(Sprite):
         if self.reload > 0:
             return
         self.reload = self.reload_time
+        next(self.next_fire_sound).play()
         d  = self.rotation
         sb = list(self.special_bullets)
         for i in range(self.bullets):
