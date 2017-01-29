@@ -28,6 +28,7 @@ from kivyoav.autosized_label import AutoSizedLabel
 from kivy.uix.popup import Popup
 from kivy.core.audio import SoundLoader
 import json
+import time
 
 sm = ScreenManager()
 
@@ -80,8 +81,8 @@ class Sprite(Scatter):
         self.y += self.velocity_y
         self.x += self.velocity_x
         
-        self.velocity_x *= 0.998
-        self.velocity_y *= 0.998
+#         self.velocity_x *= 0.998
+#         self.velocity_y *= 0.998
         
         
 
@@ -204,6 +205,7 @@ class Player(Sprite):
         self.speed = 0.2
         self.bullets = 1
         self.special_bullets = []
+        self.specials = []
         
 
     def check_wall_collision(self):
@@ -239,8 +241,12 @@ class Player(Sprite):
             self.thrust = self.speed
         if user_pressed[keys['fire']]:
             self.fire()
+        if user_pressed[keys['special']]:
+            self.activate_special()
         
         super(Player, self).update()
+        self.velocity_x *= 0.99
+        self.velocity_y *= 0.99
         
     def play_dead(self):
         self.counter -= 1
@@ -251,6 +257,10 @@ class Player(Sprite):
         self.size_hint_x * 1.05
         self.a *= 0.9
         super(Player, self).update()
+        
+    def activate_special(self):
+        for s in self.specials:
+            s.activate(self)
     
     def hit_by(self, something):
         self.lives -= min(self.lives, something.damage)
@@ -339,9 +349,37 @@ class SlowerReloadGift(BaseGift):
         print("player %s need %d ms for reload" % (player.name, player.reload_time))
         player.reload_time += 5
         print("and now he needs %d ms MUHAHAHA" % (player.reload_time))
+        
+class ElectroMagnetShield(BaseGift):
+    
+    SOURCE = "imgs/e-m-shield.png"
+    
+    def apply_gift(self, player):
+        player.specials.append(ElectroMagnet()) 
 
 
-gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift, FasterReloadGift, SlowerReloadGift]
+gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift, 
+              FasterReloadGift, SlowerReloadGift, ElectroMagnetShield]
+
+class Special(object):
+    
+    COOLDOWN = 3
+    
+    def __init__(self):
+        self.last_activation = 0
+    
+    def activate(self, owner):
+        self.owner = owner
+        t = time.time()
+        if t - self.last_activation < self.COOLDOWN:
+            self.last_activation = t
+        self.engage()
+        
+    
+class ElectroMagnet(Special):
+
+    def engage(self):
+        pass
 
 def gen_gift(*args, **kw):
     return random.choice(gift_types)(*args, **kw)
@@ -357,12 +395,15 @@ class Planet(Sprite):
         
     def update(self):
         area = self.radius * 3
-        for obj in itertools.chain(self.game.players, self.game.bullets):
+        for obj in self.game.bullets:
             if obj.collide(self, area):
                 if obj.collide(self):
                     obj.hit_by(self)
                 else:
                     self._attract(obj)
+        for obj in self.game.players:
+            if obj.collide(self):
+                obj.hit_by(self)
                     
         
     def _attract(self, obj):
@@ -405,9 +446,20 @@ class Game(Screen):
         self.gifts = []
         self.dead_players = []
         self.bullets = []
-        for p, s in zip(ConfigScreen.players, self.players_setup):
+        h = GlobalStuff.height * 0.10
+        w = GlobalStuff.width * 0.10
+        positions = [ (w, h, 45), (w*5, h, 90), (w*9, h, 135),
+                     (w, h*9, -45), 
+                     (w*5, h*9, -90), 
+                     (w*9, h*9, -135),
+            ]
+        
+        for p, s, pos in zip(ConfigScreen.players, self.players_setup, positions):
             if not s['play']: continue
             p = Player(self, team=s['team_name'], **p)
+            p.rotation = pos[2]
+            p.center = pos[:2]
+            
             self.players.append(p)
             self.area.add_widget(p)
             
@@ -518,7 +570,6 @@ class Game(Screen):
             winner = 'Team %s' % (self.players[0].team)
             self.gameover(winner)
         
-        if random.random() > 0.995:
         if random.random() > 0.99:
             self.create_gift()
             
@@ -690,12 +741,6 @@ class ConfigScreen(Screen):
                
                
                
-               
-    
-    
-        
-            
-
 class Menu(Screen):
     
     def __init__(self, **kw):
@@ -830,7 +875,7 @@ class SkyBombersApp(App):
         def on_joy_button_down(_, joynum, btn):
             
             k = (joynum+1) * 1000 + btn + 50
-            print(k)
+      
             KEYS[k] = 1
         def on_joy_button_up(_, joynum, btn):
             k = (joynum+1) * 1000 + btn + 50
