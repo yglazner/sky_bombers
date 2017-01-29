@@ -120,8 +120,8 @@ class Bullet(Sprite):
     def __init__(self, game, owner, direction, **kw):
         super(Bullet, self).__init__(game, **kw)     
         self.rotation = direction#owner.rotation   
-        self.velocity_x = owner.velocity_x + math.cos(radians(self.rotation)) * 4
-        self.velocity_y = owner.velocity_y +  math.sin(radians(self.rotation)) * 4
+        self.velocity_x = owner.velocity_x + math.cos(radians(self.rotation)) * 10
+        self.velocity_y = owner.velocity_y +  math.sin(radians(self.rotation)) * 10
         
         self.active = True
         self.first = 1
@@ -232,9 +232,9 @@ class Player(Sprite):
         keys = self.keys
         self.thrust = 0
         if user_pressed[keys['left']]:
-            self.rotation += 5
+            self.rotation += 10
         elif user_pressed[keys['right']]:    
-            self.rotation -= 5
+            self.rotation -= 10
         if user_pressed[keys['thrust']]:
             self.thrust = self.speed
         if user_pressed[keys['fire']]:
@@ -327,7 +327,9 @@ class FasterReloadGift(BaseGift):
 
     def apply_gift(self, player):
         print("player %s need %d ms for reload" % (player.name, player.reload_time))
-        player.reload_time /= 2
+        player.reload_time -= 5
+        if player.reload_time <=5:
+            player.reload_time = 5
         print("and now he needs only %d ms" % (player.reload_time))
 
 class SlowerReloadGift(BaseGift):
@@ -335,7 +337,7 @@ class SlowerReloadGift(BaseGift):
 
     def apply_gift(self, player):
         print("player %s need %d ms for reload" % (player.name, player.reload_time))
-        player.reload_time *= 2
+        player.reload_time += 5
         print("and now he needs %d ms MUHAHAHA" % (player.reload_time))
 
 
@@ -424,7 +426,7 @@ class Game(Screen):
         self.background_sound.play()
         self.label = Label(text="FPS: ?", pos=(200,200)) 
         self.area.add_widget(self.label)
-        self._loop = Clock.schedule_interval(self._update, 1.0/25)
+        self._loop = Clock.schedule_interval(self._update, 1.0/30)
         self.count = 0.0
         self.frames_count = 1
         
@@ -517,6 +519,7 @@ class Game(Screen):
             self.gameover(winner)
         
         if random.random() > 0.995:
+        if random.random() > 0.99:
             self.create_gift()
             
         #wall collisions
@@ -855,5 +858,5 @@ if __name__ == '__main__':
     Window.maxfps = 36
     #Config.fullscreen = 1
     #Config.set('graphics', 'fullscreen', 'auto')
-    #Window.fullscreen = 'auto'
+    Window.fullscreen = 'auto'
     SkyBombersApp().run()
