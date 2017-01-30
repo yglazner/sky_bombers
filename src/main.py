@@ -201,7 +201,7 @@ class Player(Sprite):
         self.velocity_y = 0.0 * math.sin(radians(self.rotation))
         self.reload = 0
         self.reload_time = 20
-        self.keys = keys
+        self.keys = dict(keys)
         self.name = name
         self.team = team
         self.speed = 0.2
@@ -351,7 +351,16 @@ class SlowerReloadGift(BaseGift):
         print("player %s need %d ms for reload" % (player.name, player.reload_time))
         player.reload_time += 5
         print("and now he needs %d ms MUHAHAHA" % (player.reload_time))
-        
+
+class ReverseKeysGift(BaseGift):
+    SOURCE = "imgs/skull.png"
+
+    def apply_gift(self, player):
+        temp = player.keys['right']
+        player.keys['right'] = player.keys['left']
+        player.keys['left'] = temp
+
+
 class ElectroMagnetShield(BaseGift):
     
     SOURCE = "imgs/e-m-shield.png"
@@ -360,8 +369,8 @@ class ElectroMagnetShield(BaseGift):
         player.specials.append(ElectroMagnet()) 
 
 
-gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift, 
-              FasterReloadGift, SlowerReloadGift, ElectroMagnetShield]
+gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
+              FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield]
 
 class Special(object):
     
@@ -471,11 +480,9 @@ class Game(Screen):
         self.bullets = []
         h = GlobalStuff.height * 0.10
         w = GlobalStuff.width * 0.10
-        positions = [ (w, h, 45), (w*5, h, 90), (w*9, h, 135),
-                     (w, h*9, -45), 
-                     (w*5, h*9, -90), 
-                     (w*9, h*9, -135),
-            ]
+        positions = [ (w, h, 45), (w * 5, h * 9, -90), (w * 9, h, 135),
+                      (w, h * 9, -45), (w * 9, h * 9, -135), (w * 5, h, 90),
+                      ]
         
         for p, s, pos in zip(ConfigScreen.players, self.players_setup, positions):
             if not s['play']: continue
