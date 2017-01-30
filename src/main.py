@@ -18,7 +18,7 @@ from kivy.uix.label import Label
 from kivy.uix.scatter import Scatter
 import cmath
 import math
-from math import radians
+from math import radians, tan
 import random
 from kivy.config import Config, ConfigParser
 import kivyoav.autosized_label
@@ -174,9 +174,9 @@ class HomingMissle(Bullet):
             
             self.velocity_x += speed if p.center_x > self.center_x else -speed
             self.velocity_y += speed if p.center_y > self.center_y else -speed
-            
 
-class Player(Sprite):    
+
+class AirCraft(Sprite):
     lives = NumericProperty(5)
     hit_sounds = [SoundLoader.load('Music/shots/hit.mp3'),SoundLoader.load('Music/shots/hit.mp3'),SoundLoader.load('Music/shots/hit.mp3'),
                   SoundLoader.load('Music/shots/hit.mp3'),SoundLoader.load('Music/shots/hit.mp3'),
@@ -195,24 +195,18 @@ class Player(Sprite):
     next_hit_sound = itertools.cycle(hit_sounds)
     next_fire_sound = itertools.cycle(fire_sounds)
     
-    def __init__(self, game, name, team, keys, **kw):
-        super(Player, self).__init__(game, **kw)
+    def __init__(self, game, **kw):
+        super(AirCraft, self).__init__(game, **kw)
         self.velocity_x = 0.0 * math.cos(radians(self.rotation))
         self.velocity_y = 0.0 * math.sin(radians(self.rotation))
-        self.reload = 0
-        self.reload_time = 20
-        self.keys = dict(keys)
-        self.name = name
-        self.team = team
-        self.speed = 0.2
         self.bullets = 1
+        self.reload = 50
+        self.reload_time = 20
+        self.speed = 0.2
         self.special_bullets = []
-        self.specials = []
+        self.lives = 1
         
-
-    def check_wall_collision(self):
-        
-   
+    def check_wall_collision(self):   
         x, y = self.center
         if x  < 0:
             return True
@@ -222,17 +216,119 @@ class Player(Sprite):
             return True
         if y < 0:
             return True
+    
+    def update(self):
+        if self.lives<=0 or self.check_wall_collision():
+            self.game.mark_dead(self)
+        self.reload -= 1
+        super(AirCraft, self).update()
+        self.velocity_x *=0.99
+        self.velocity_y *=0.99
+        
+    def hit_by(self, something):
+        self.lives -= min(self.lives, something.damage)
+        if self.lives == 0:
+            next(self.next_dead_sound).play()
+        else:
+            next(self.next_hit_sound).play()
+            
+    def fire(self):
+        if self.reload > 0:
+            return
+        self.reload = self.reload_time
+        next(self.next_fire_sound).play()
+        d  = self.rotation
+        sb = list(self.special_bullets)
+        for i in range(self.bullets):
+            B = sb.pop() if sb else Bullet
+            bullet = B(self.game, self, d + (i*8*((i%2) or -1)))
+            self.game.add_bullet(bullet)
+        
+    
+        
+class Drone(AirCraft):
+    
+    
+    def __init__(self, game, center):
+        super(Drone, self).__init__(game)
+        self.speed = 0.1
+        self._first_time = 1
+        self._center = center
+        
+    def update(self):
+        if self._first_time:
+            self._first_time = 0
+            self.center = self._center
+        area = self.radius * 20
+        self.thrust = 1
+        p = self.game.check_player_collision(self, [self], area)
+        if p:
+            a = p.center_x - self.center_x
+            b = p.center_y - self.center_y
+            if b!=0:
+                r = tan(abs(a)/float(abs(b)))
+                d = math.degrees(r)
+                if a < 0:
+                    d = 180 - d
+                if b < 0:
+                    d = -d
+                self.rotation = d
+                
+        else:
+            x, y = self.center
+            area = self.radius*4
+            above_middle = y > GlobalStuff.center_y
+            passed_middle = x > GlobalStuff.center_x
+            if x - area < 0:
+                if above_middle:
+                    self.rotation = 135
+                else:
+                    self.rotation = 45
+            elif x + area > GlobalStuff.right:
+                if above_middle:
+                    self.rotation = -135
+                else:
+                    self.rotation = -45
+            if y - area < 0:
+                if passed_middle:
+                    self.rotation = 45
+                else:
+                    self.rotation = -45
+            elif y + area > GlobalStuff.top:
+                if passed_middle:
+                    self.rotation = 135
+                else:
+                    self.rotation = -135
+        
+        self.fire()
+        super(Drone, self).update()
+         
+
+class Player(AirCraft):    
+    
+    
+    def __init__(self, game, name, team, keys, **kw):
+        super(Player, self).__init__(game, **kw)
+        
+        self.keys = dict(keys)
+        self.name = name
+        self.team = team
+        self.speed = 0.2
+        self.lives = 5
+        self.specials = set([])
+        
+    
+
+        
             
 
     def update(self,  user_pressed=KEYS):
-        
         
         if self.lives <= 0 or self.check_wall_collision():
             self.lives = 0
             self.counter = 20
             self.game.mark_dead(self)
             self.update = self.play_dead
-        self.reload -= 1
         keys = self.keys
         self.thrust = 0
         if user_pressed[keys['left']]:
@@ -264,25 +360,9 @@ class Player(Sprite):
         for s in self.specials:
             s.activate(self)
     
-    def hit_by(self, something):
-        self.lives -= min(self.lives, something.damage)
-        if self.lives == 0:
-            next(self.next_dead_sound).play()
-        else:
-            next(self.next_hit_sound).play()
-    def fire(self):
-        if self.reload > 0:
-            return
-        self.reload = self.reload_time
-        next(self.next_fire_sound).play()
-        d  = self.rotation
-        sb = list(self.special_bullets)
-        for i in range(self.bullets):
-            if sb:
-                bullet = sb.pop()(self.game, self, d + (i*8*((i%2) or -1)))
-            else:
-                bullet = Bullet(self.game, self, d + (i*8*((i%2) or -1)))
-            self.game.add_bullet(bullet)
+    
+            
+
 
 class BaseGift(Sprite):
     
@@ -366,11 +446,22 @@ class ElectroMagnetShield(BaseGift):
     SOURCE = "imgs/e-m-shield.png"
     
     def apply_gift(self, player):
-        player.specials.append(ElectroMagnet()) 
+        if ElectroMagnet not in [type(s) for s in player.specials]:
+            player.specials.add(ElectroMagnet()) 
 
 
+
+class DroneGift(BaseGift):
+    SOURCE = 'imgs/drone.png'
+    
+    def apply_gift(self, player):
+        player.specials.add(FightingDroneSpecial())
+        
+        
 gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
-              FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield]
+              FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield,
+              #DroneGift
+              ]
 
 class Special(object):
     
@@ -386,7 +477,24 @@ class Special(object):
             self.last_activation = t
             self.engage()
         
+class FightingDroneSpecial(Special):
     
+    def __init__(self):
+        super(FightingDroneSpecial, self).__init__()
+        self.active = 0
+    
+    def engage(self):
+        if self.active:
+            return
+        self.active = 1
+        owner = self.owner
+        d = Drone(owner.game, center=owner.center,
+                  )
+        d.rotation = owner.rotation
+        d.size_hint = 0.01, 0.01
+        owner.game.add_drone(d)
+        
+
 class ElectroMagnet(Special):
 
     def engage(self):
@@ -467,7 +575,7 @@ class Game(Screen):
         
     @property
     def flying_objects(self):
-        return itertools.chain(self.players, self.bullets)
+        return itertools.chain(self.players, self.bullets, self.drones)
         
     def on_enter(self, *args):
         Screen.on_enter(self, *args)
@@ -478,6 +586,7 @@ class Game(Screen):
         self.gifts = []
         self.dead_players = []
         self.bullets = []
+        self.drones = []
         h = GlobalStuff.height * 0.10
         w = GlobalStuff.width * 0.10
         positions = [ (w, h, 45), (w * 5, h * 9, -90), (w * 9, h, 135),
@@ -517,6 +626,10 @@ class Game(Screen):
         self._loop.cancel()
         self.background_sound.stop()
 
+    def add_drone(self, drone):
+        self.drones.append(drone)
+        self.area.add_widget(drone)
+        
     def add_bullet(self, bullet):
         self.bullets.append(bullet)
         self.area.add_widget(bullet)
@@ -526,10 +639,13 @@ class Game(Screen):
             self.bullets.remove(bullet)
             self.area.remove_widget(bullet)
             
-    def mark_dead(self, player):
-        self.players.remove(player)
-        self.dead_players.append(player)
-        
+    def mark_dead(self, a):
+        if a in self.players:
+            self.players.remove(a)
+            self.dead_players.append(a)
+        if a in self.drones:
+            self.drones.remove(a)
+            
     def remove_player(self, player):
         self.dead_players.remove(player)
         self.remove_widget(player)
@@ -593,7 +709,8 @@ class Game(Screen):
         for p in self.planets:
             p.update()
         
-        for p in itertools.chain(self.players, self.dead_players, self.gifts):
+        for p in itertools.chain(self.players, self.dead_players,
+                                 self.gifts, self.drones):
             p.update()
             
         if self.count > 1.0:

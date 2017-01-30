@@ -36,9 +36,7 @@
             circle: (self.size[0]/2, self.size[1]/2,  (self.size[0]+self.size[1]) / 4.0)
             
         
-        
-        
-<Player>:
+<AirCraft>:
     canvas.before:
         Color:
             rgba: self.r, self.g, self.b, self.a
@@ -49,6 +47,10 @@
         Rectangle:
             pos: (-self.width*0.10 ,self.height /10 * (5-self.lives), )
             size: self.width*0.10, (self.height * 0.80) * (self.lives)/ 5
+               
+        
+<Player>:
+    
        
 <Bullet>:
    
