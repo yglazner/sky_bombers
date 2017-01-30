@@ -29,6 +29,7 @@ from kivy.uix.popup import Popup
 from kivy.core.audio import SoundLoader
 import json
 import time
+from kivy.animation import Animation
 
 sm = ScreenManager()
 
@@ -193,6 +194,7 @@ class Player(Sprite):
     next_dead_sound = itertools.cycle(dead_sounds)
     next_hit_sound = itertools.cycle(hit_sounds)
     next_fire_sound = itertools.cycle(fire_sounds)
+    
     def __init__(self, game, name, team, keys, **kw):
         super(Player, self).__init__(game, **kw)
         self.velocity_x = 0.0 * math.cos(radians(self.rotation))
@@ -371,15 +373,29 @@ class Special(object):
     def activate(self, owner):
         self.owner = owner
         t = time.time()
-        if t - self.last_activation < self.COOLDOWN:
+        if t - self.last_activation > self.COOLDOWN:
             self.last_activation = t
-        self.engage()
+            self.engage()
         
     
 class ElectroMagnet(Special):
 
     def engage(self):
-        pass
+        owner = self.owner
+        game = owner.game
+        area = owner.radius * 10
+        game.add_pulse(self.owner.center, area) 
+        speed = 10
+        for obj in game.flying_objects:
+            if obj == owner: continue
+            if obj.collide(owner, area):
+                diffx = owner.center_x - obj.center_x 
+                diffy =  owner.center_y - obj.center_y
+                
+                ratio = abs(diffx) / (abs(diffx)+abs(diffy) + 0.1)
+                obj.velocity_x -= ratio * speed * (1 if diffx>0 else -1)
+                obj.velocity_y -= (1-ratio) * speed * (1 if diffy>0 else -1)
+    
 
 def gen_gift(*args, **kw):
     return random.choice(gift_types)(*args, **kw)
@@ -417,6 +433,11 @@ class Planet(Sprite):
         obj.velocity_y -= speedy if diffy > 0 else -speedy
         
 
+class Pulse(Sprite):
+    
+    pass
+
+
 class Game(Screen):
     area = ObjectProperty(None)
     
@@ -435,7 +456,9 @@ class Game(Screen):
         self.players_setup = players
         self.level = level
         
-    
+    @property
+    def flying_objects(self):
+        return itertools.chain(self.players, self.bullets)
         
     def on_enter(self, *args):
         Screen.on_enter(self, *args)
@@ -511,7 +534,17 @@ class Game(Screen):
                 if p not in filter:
                     return p
                 
-    
+    def add_pulse(self, pos, size):
+        
+        pulse = Pulse(self, center=pos)
+        self.area.add_widget(pulse)
+        def remove_pulse(*args):
+            self.area.remove_widget(pulse)
+        x,y = pulse.size_hint
+        a = Animation(d=0.2, center=pos, size_hint_x=x*10, size_hint_y=y*10)
+        a.on_complete = remove_pulse
+        a.start(pulse)
+        
                 
     def remove_gift(self, gift):
         self.gifts.remove(gift)

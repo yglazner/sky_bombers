@@ -9,7 +9,16 @@
     a: 0.5
     #size: 60, 60
     
-            
+<Pulse>:
+
+    size_hint: 0.02, 0.02
+    canvas.before:
+        Color:
+            rgba: (0.6, 0.4, 1.0, 0.9)
+        Line:
+            circle: self.size[0]/2, self.size[1]/2,  self.radius-5
+        Line:
+            circle: self.size[0]/2, self.size[1]/2,  self.radius
 <BaseGift>:
     src: ""
     Image:
