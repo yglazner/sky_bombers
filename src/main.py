@@ -18,7 +18,7 @@ from kivy.uix.label import Label
 from kivy.uix.scatter import Scatter
 import cmath
 import math
-from math import radians, tan
+from math import radians, tan, atan
 import random
 from kivy.config import Config, ConfigParser
 import kivyoav.autosized_label
@@ -249,59 +249,53 @@ class AirCraft(Sprite):
 class Drone(AirCraft):
     
     
-    def __init__(self, game, center):
+    def __init__(self, game, creator):
+        owner = self.owner = creator.owner
+        self.rotation = owner.rotation
         super(Drone, self).__init__(game)
-        self.speed = 0.1
+        self.speed = 0.02
+        self.reload_time = self.owner.reload_time * 2
         self._first_time = 1
-        self._center = center
+        self.name = "Drone"
+        self.creator= creator
+        self.r = owner.r
+        self.g = owner.g
+        self.b = owner.b
+        self.a = owner.a
         
     def update(self):
         if self._first_time:
             self._first_time = 0
-            self.center = self._center
-        area = self.radius * 20
+            self.center = self.owner.center
+            self.rotation= self.owner.rotation
+        print("rotation:%s"%self.rotation)
+        area = self.radius
         self.thrust = 1
-        p = self.game.check_player_collision(self, [self], area)
-        if p:
-            a = p.center_x - self.center_x
-            b = p.center_y - self.center_y
+        p = None
+        for _ in range(10):
+            area += self.radius * 10
+            p = self.game.check_player_collision(self, [self, self.owner], area)
+            if p: break
+        if p:      
+            b = p.center_x - self.center_x
+            a = p.center_y - self.center_y
             if b!=0:
-                r = tan(abs(a)/float(abs(b)))
+                r = atan(abs(a)/float(abs(b)))
                 d = math.degrees(r)
+                #print('angle = %d a=%s b=%s' % (d, a, b))
                 if a < 0:
-                    d = 180 - d
-                if b < 0:
                     d = -d
-                self.rotation = d
-                
-        else:
-            x, y = self.center
-            area = self.radius*4
-            above_middle = y > GlobalStuff.center_y
-            passed_middle = x > GlobalStuff.center_x
-            if x - area < 0:
-                if above_middle:
-                    self.rotation = 135
-                else:
-                    self.rotation = 45
-            elif x + area > GlobalStuff.right:
-                if above_middle:
-                    self.rotation = -135
-                else:
-                    self.rotation = -45
-            if y - area < 0:
-                if passed_middle:
-                    self.rotation = 45
-                else:
-                    self.rotation = -45
-            elif y + area > GlobalStuff.top:
-                if passed_middle:
-                    self.rotation = 135
-                else:
-                    self.rotation = -135
-        
+                if b < 0:
+                    d = 180 - d
+                self.rotation = d % 360
+                        
         self.fire()
         super(Drone, self).update()
+        self.velocity_x *= 0.50
+        self.velocity_y *= 0.50
+        
+    def dead(self):
+        self.creator.drone_dead()
          
 
 class Player(AirCraft):    
@@ -315,12 +309,11 @@ class Player(AirCraft):
         self.team = team
         self.speed = 0.2
         self.lives = 5
-        self.specials = set([])
+        self.specials = set()
         
-    
-
-        
-            
+    def add_special(self, s):
+        if type(s) not in map(type, self.specials):
+            self.specials.add(s) 
 
     def update(self,  user_pressed=KEYS):
         
@@ -333,8 +326,10 @@ class Player(AirCraft):
         self.thrust = 0
         if user_pressed[keys['left']]:
             self.rotation += 10
+            print(self.rotation)
         elif user_pressed[keys['right']]:    
             self.rotation -= 10
+            print(self.rotation)
         if user_pressed[keys['thrust']]:
             self.thrust = self.speed
         if user_pressed[keys['fire']]:
@@ -373,7 +368,7 @@ class BaseGift(Sprite):
         self.src = self.SOURCE
         
     def update(self):
-        p = self.game.check_player_collision(self)
+        p = self.game.check_player_collision(self, filter=self.game.drones)
         if p:
             self.apply_gift(p)
             self.game.remove_gift(self)
@@ -446,8 +441,8 @@ class ElectroMagnetShield(BaseGift):
     SOURCE = "imgs/e-m-shield.png"
     
     def apply_gift(self, player):
-        if ElectroMagnet not in [type(s) for s in player.specials]:
-            player.specials.add(ElectroMagnet()) 
+        player.add_special(ElectroMagnet())
+        
 
 
 
@@ -455,12 +450,13 @@ class DroneGift(BaseGift):
     SOURCE = 'imgs/drone.png'
     
     def apply_gift(self, player):
-        player.specials.add(FightingDroneSpecial())
+        player.add_special(FightingDroneSpecial())
+
         
         
 gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
               FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield,
-              #DroneGift
+              DroneGift
               ]
 
 class Special(object):
@@ -479,6 +475,8 @@ class Special(object):
         
 class FightingDroneSpecial(Special):
     
+    COOLDOWN = 10
+    
     def __init__(self):
         super(FightingDroneSpecial, self).__init__()
         self.active = 0
@@ -488,11 +486,17 @@ class FightingDroneSpecial(Special):
             return
         self.active = 1
         owner = self.owner
-        d = Drone(owner.game, center=owner.center,
+        d = Drone(owner.game, creator=self,
                   )
+        
         d.rotation = owner.rotation
+        d.center = owner.center
         d.size_hint = 0.01, 0.01
         owner.game.add_drone(d)
+        
+    def drone_dead(self):
+        self.active = 0
+        self.last_activation = time.time()
         
 
 class ElectroMagnet(Special):
@@ -645,6 +649,7 @@ class Game(Screen):
             self.dead_players.append(a)
         if a in self.drones:
             self.drones.remove(a)
+            a.dead()
             
     def remove_player(self, player):
         self.dead_players.remove(player)
@@ -652,10 +657,11 @@ class Game(Screen):
 
     def check_player_collision(self, obj, filter=[], area=0):
         
-        for p in self.players:
+        for p in itertools.chain(self.players,self.drones):
             if p.collide(obj, area):
                 if p not in filter:
                     return p
+    
                 
     def add_pulse(self, pos, size):
         
@@ -1052,7 +1058,9 @@ class SkyBombersApp(App):
         sm.add_widget(GameOver(name='game_over'))
         sm.add_widget(Menu(name='menu'))
         sm.current = 'menu'
-        Clock.schedule_once(lambda dt: GlobalStuff.init(), 5)
+        for i in range(6):
+            Clock.schedule_once(lambda dt: GlobalStuff.init(), i)
+       
         return sm
 
 if __name__ == '__main__':
