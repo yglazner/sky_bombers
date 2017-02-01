@@ -176,39 +176,18 @@ class HomingMissle(Bullet):
 
 
 class Mine(Bullet):
-    def __init__(self, game, creator, direction, **kw):
-        super(Mine, self).__init__(game, creator.owner, direction, **kw)
-        self.rotation = direction  # owner.rotation
+    def __init__(self, game, owner, **kw):
+        super(Mine, self).__init__(game, owner, owner.rotation, **kw)
         self.velocity_x = 0  #owner.velocity_x + math.cos(radians(self.rotation)) * 10
         self.velocity_y = 0  #owner.velocity_y + math.sin(radians(self.rotation)) * 10
 
-        owner = self.owner = creator.owner
-        self.first = 1
-        self.active = True
-        self.creator = creator
-
-        self.center = -200, -200
         self.blow_rate = 1.2
-        self.max_counter = 400
-        self.counter = 0
+        self.max_counter = 500
+
 
     def update(self):
-        if self.first:
-            self.center = self.owner.center
-            self.first=0
-        self.counter +=1
-        bingo = self.game.check_player_collision(self, [])
-
-        if bingo and self.active and self.counter>75:
-            self.active = False
-            bingo.hit_by(self)
-            self.counter = 25
-        if self.counter > self.max_counter:
-            self.game.remove_bullet(self)
-            self.active = False
-        if not self.active:
-            self.blow *= self.blow_rate
-            self.blow_rate *= 0.90
+        if self.counter == 75:
+            self.owner = None
 
         super(Mine, self).update()
 
@@ -569,7 +548,7 @@ class MineSpecial(Special):
     def engage(self):
         owner = self.owner
         game = owner.game
-        mine = Mine(game, creator=self, direction=0)
+        mine = Mine(game, owner=self.owner)
         mine.size_hint = 0.05, 0.05
         game.add_bullet(mine)
 
