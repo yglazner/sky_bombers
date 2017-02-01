@@ -167,7 +167,7 @@ class HomingMissle(Bullet):
     
     def update(self):
         speed = 0.5
-        Bullet.update(self)
+        super(HomingMissle, self).update()
         p = self.game.check_player_collision(self, [self.owner], self.owner.radius*10)
         if p:
             
@@ -540,6 +540,7 @@ class FightingDroneSpecial(Special):
         self.active = 0
         self.last_activation = time.time()
         
+        
 
 class ElectroMagnet(Special):
 
@@ -688,6 +689,7 @@ class Game(Screen):
     def add_drone(self, drone):
         self.drones.append(drone)
         self.area.add_widget(drone)
+    
         
     def add_bullet(self, bullet):
         self.bullets.append(bullet)
@@ -704,6 +706,7 @@ class Game(Screen):
             self.dead_players.append(a)
         if a in self.drones:
             self.drones.remove(a)
+            self.area.remove_widget(a)
             a.dead()
             
     def remove_player(self, player):
