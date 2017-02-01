@@ -143,7 +143,6 @@ class Bullet(Sprite):
         if self.first:
             self.center = self.owner.center
             self.first=0
-            #next(self.next_bullet_sound).play()
         self.counter +=1
         bingo = self.game.check_player_collision(self, [self.owner])
         
@@ -174,6 +173,44 @@ class HomingMissle(Bullet):
             
             self.velocity_x += speed if p.center_x > self.center_x else -speed
             self.velocity_y += speed if p.center_y > self.center_y else -speed
+
+
+class Mine(Bullet):
+    def __init__(self, game, creator, direction, **kw):
+        super(Mine, self).__init__(game, creator.owner, direction, **kw)
+        self.rotation = direction  # owner.rotation
+        self.velocity_x = 0  #owner.velocity_x + math.cos(radians(self.rotation)) * 10
+        self.velocity_y = 0  #owner.velocity_y + math.sin(radians(self.rotation)) * 10
+
+        owner = self.owner = creator.owner
+        self.first = 1
+        self.active = True
+        self.creator = creator
+
+        self.center = -200, -200
+        self.blow_rate = 1.2
+        self.max_counter = 400
+        self.counter = 0
+
+    def update(self):
+        if self.first:
+            self.center = self.owner.center
+            self.first=0
+        self.counter +=1
+        bingo = self.game.check_player_collision(self, [])
+
+        if bingo and self.active and self.counter>75:
+            self.active = False
+            bingo.hit_by(self)
+            self.counter = 25
+        if self.counter > self.max_counter:
+            self.game.remove_bullet(self)
+            self.active = False
+        if not self.active:
+            self.blow *= self.blow_rate
+            self.blow_rate *= 0.90
+
+        super(Mine, self).update()
 
 
 class AirCraft(Sprite):
@@ -452,11 +489,16 @@ class DroneGift(BaseGift):
     def apply_gift(self, player):
         player.add_special(FightingDroneSpecial())
 
-        
+
+class MineGift(BaseGift):
+    SOURCE = 'imgs/mine.png'
+
+    def apply_gift(self, player):
+        player.add_special(MineSpecial())
         
 gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
               FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield,
-              DroneGift
+              DroneGift, MineGift
               ]
 
 class Special(object):
@@ -517,6 +559,18 @@ class ElectroMagnet(Special):
                 obj.velocity_x -= ratio * speed * (1 if diffx>0 else -1)
                 obj.velocity_y -= (1-ratio) * speed * (1 if diffy>0 else -1)
     
+class MineSpecial(Special):
+    COOLDOWN = 10
+
+    def __init__(self):
+        super(MineSpecial, self).__init__()
+
+    def engage(self):
+        owner = self.owner
+        game = owner.game
+        mine = Mine(game, creator=self, direction=0)
+        mine.size_hint = 0.05, 0.05
+        game.add_bullet(mine)
 
 def gen_gift(*args, **kw):
     return random.choice(gift_types)(*args, **kw)
@@ -591,6 +645,7 @@ class Game(Screen):
         self.dead_players = []
         self.bullets = []
         self.drones = []
+        self.mines = []
         h = GlobalStuff.height * 0.10
         w = GlobalStuff.width * 0.10
         positions = [ (w, h, 45), (w * 5, h * 9, -90), (w * 9, h, 135),
@@ -642,7 +697,7 @@ class Game(Screen):
         if bullet in self.bullets:
             self.bullets.remove(bullet)
             self.area.remove_widget(bullet)
-            
+
     def mark_dead(self, a):
         if a in self.players:
             self.players.remove(a)
@@ -716,7 +771,7 @@ class Game(Screen):
             p.update()
         
         for p in itertools.chain(self.players, self.dead_players,
-                                 self.gifts, self.drones):
+                                 self.gifts, self.drones, self.mines):
             p.update()
             
         if self.count > 1.0:
