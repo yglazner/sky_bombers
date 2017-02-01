@@ -168,7 +168,7 @@ class HomingMissle(Bullet):
     
     def update(self):
         speed = 0.5
-        Bullet.update(self)
+        super(HomingMissle, self).update()
         p = self.game.check_player_collision(self, [self.owner], self.owner.radius*10)
         if p:
             
