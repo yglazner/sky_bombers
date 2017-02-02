@@ -195,7 +195,26 @@ class HomingMissle(Bullet):
             self.velocity_y += speed if p.center_y > self.center_y else -speed
 
 
+class SineMissle(Bullet):
+    def __init__(self, game, owner, direction, **kw):
+        super(SineMissle, self).__init__(game, owner, owner.rotation, **kw)
+        self.speed_x = math.cos(radians(self.rotation)) * 30
+        self.speed_y = math.sin(radians(self.rotation)) * 30
+        self.max_counter = 200
+        
+    def update(self):
+        #TBD: play with the 10 value below (in the angle - the Dgima value, and in the speed)
+        angle = (self.counter * 10) % 360
+        if angle < 90 or angle > 270:
+            self.velocity_x = 10 * math.cos(radians(self.rotation-45))
+            self.velocity_y = 10 * math.sin(radians(self.rotation-45))
+        else:
+            self.velocity_x = 10 * math.cos(radians(self.rotation+45))
+            self.velocity_y = 10 * math.sin(radians(self.rotation+45))
+        super(SineMissle, self).update()
+            
 class Mine(Bullet):
+
     def __init__(self, game, owner, **kw):
         super(Mine, self).__init__(game, owner, owner.rotation, **kw)
         self.velocity_x = 0  #owner.velocity_x + math.cos(radians(self.rotation)) * 10
@@ -443,12 +462,20 @@ class HomingMissleGift(BaseGift):
     def apply_gift(self, player):
         player.special_bullets.append(HomingMissle)
         
+class SineMissleGift(BaseGift):
+    
+    SOURCE = 'imgs/rocket.png'
+    
+    def apply_gift(self, player):
+        player.special_bullets.append(SineMissle)
+
 class BiggerBulletGift(BaseGift):
     
     SOURCE = 'imgs/big_bullet_gift.png'
     
     def apply_gift(self, player):
         player.special_bullets.append(BigBullet)
+
 
 class FasterReloadGift(BaseGift):
     SOURCE = "imgs/ammo.png"
@@ -502,7 +529,7 @@ class MineGift(BaseGift):
         
 gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
               FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield,
-              DroneGift, MineGift, BiggerBulletGift
+              DroneGift, MineGift, BiggerBulletGift, SineMissleGift
               ]
 
 class Special(object):
