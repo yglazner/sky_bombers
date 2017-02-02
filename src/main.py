@@ -161,6 +161,13 @@ class Bullet(Sprite):
             
         super(Bullet, self).update()
         
+class BigBullet(Bullet):
+    
+    def __init__(self, *args, **kw):
+        super(BigBullet, self).__init__(*args, **kw)
+        self.size_hint_x *= 2
+        self.size_hint_y *= 2
+        
 class HomingMissle(Bullet):
     
     
@@ -424,6 +431,13 @@ class HomingMissleGift(BaseGift):
     
     def apply_gift(self, player):
         player.special_bullets.append(HomingMissle)
+        
+class BiggerBulletGift(BaseGift):
+    
+    SOURCE = 'imgs/big_bullet_gift.png'
+    
+    def apply_gift(self, player):
+        player.special_bullets.append(BigBullet)
 
 class FasterReloadGift(BaseGift):
     SOURCE = "imgs/ammo.png"
@@ -477,7 +491,7 @@ class MineGift(BaseGift):
         
 gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
               FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield,
-              DroneGift, MineGift
+              DroneGift, MineGift, BiggerBulletGift
               ]
 
 class Special(object):
@@ -540,7 +554,7 @@ class ElectroMagnet(Special):
                 obj.velocity_y -= (1-ratio) * speed * (1 if diffy>0 else -1)
     
 class MineSpecial(Special):
-    COOLDOWN = 10
+    COOLDOWN = 3.5
 
     def __init__(self):
         super(MineSpecial, self).__init__()
