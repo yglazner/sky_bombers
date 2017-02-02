@@ -69,7 +69,16 @@ class Sprite(Scatter):
         self.velocity_x = velocity_x
         self.velocity_y = velocity_y
        
-        
+    def check_wall_collision(self):   
+        x, y = self.center
+        if x  < 0:
+            return True
+        if x  > GlobalStuff.right:
+            return True
+        if y > GlobalStuff.top:
+            return True
+        if y < 0:
+            return True    
         
     def update(self, plats=[],):
         thrust = self.thrust
@@ -87,13 +96,16 @@ class Sprite(Scatter):
         
         
 
-    def distance(self, other):
+    def distance(self, other, sqrt=math.sqrt):
         a = (self.center_x - other.center_x) ** 2
         b = (self.center_y - other.center_y)  ** 2
-        return math.sqrt(a+b)
+        return sqrt(a+b)
     
     
     def collide(self, other, area=0):
+        #this may make the game faster
+        if area==0 and not self.collide_widget(other):
+            return
         d = self.distance(other)
         if d < (self.radius+other.radius+area):
             return 1
@@ -144,6 +156,7 @@ class Bullet(Sprite):
             self.center = self.owner.center
             self.first=0
         self.counter +=1
+        
         bingo = self.game.check_player_collision(self, [self.owner])
         
         if bingo and self.active:
@@ -229,16 +242,7 @@ class AirCraft(Sprite):
         self.special_bullets = []
         self.lives = 1
         
-    def check_wall_collision(self):   
-        x, y = self.center
-        if x  < 0:
-            return True
-        if x  > GlobalStuff.right:
-            return True
-        if y > GlobalStuff.top:
-            return True
-        if y < 0:
-            return True
+
     
     def update(self):
         if self.lives<=0 or self.check_wall_collision():
@@ -291,7 +295,7 @@ class Drone(AirCraft):
             self._first_time = 0
             self.center = self.owner.center
             self.rotation= self.owner.rotation
-        print("rotation:%s"%self.rotation)
+       
         area = self.radius
         self.thrust = 1
         p = None
@@ -389,13 +393,20 @@ class BaseGift(Sprite):
     def __init__(self, game, **kwargs):
         super(BaseGift, self).__init__(game, **kwargs)
         self.src = self.SOURCE
+        self.count = 0
         
     def update(self):
-        p = self.game.check_player_collision(self, filter=self.game.drones)
-        if p:
-            self.apply_gift(p)
-            self.game.remove_gift(self)
-            return
+        self.count = (self.count+1) % 3
+        if self.count:
+            p = self.game.check_player_collision(self, filter=self.game.drones)
+            if p:
+                self.apply_gift(p)
+                self.game.remove_gift(self)
+                return
+        else:
+            if self.check_wall_collision():
+                self.game.remove_gift(self)
+                return 
         super(BaseGift, self).update()
 
     def apply_gift(self, player):
@@ -572,13 +583,25 @@ def gen_gift(*args, **kw):
 
 class Planet(Sprite):
     
+    START_COUNT = 0
+    
     color = ListProperty([1.0, 0.0, 0.0, 0.5])
     def __init__(self, game, color, size_hint, pos_hint):
         self.color = color
         self.damage = 99
         super(Planet, self).__init__(game, size_hint=size_hint, pos_hint=pos_hint)
         
+        self.action_count = 3
+        self.START_COUNT += 1 
+        self.START_COUNT %= self.action_count
+        
+        self.count = self.START_COUNT
+        
     def update(self):
+        if self.count < self.action_count:
+            self.count += 1
+            return
+        self.count = 0
         area = self.radius * 3
         for obj in self.game.bullets:
             if obj.collide(self, area):
@@ -586,16 +609,17 @@ class Planet(Sprite):
                     obj.hit_by(self)
                 else:
                     self._attract(obj)
-        for obj in self.game.players:
+        for obj in self.game.flying_objects:
             if obj.collide(self):
                 obj.hit_by(self)
                     
         
     def _attract(self, obj):
+        _abs = abs
         diffx = obj.center_x - self.center_x
         diffy = obj.center_y - self.center_y
-        speed = 0.20
-        ratio = float(abs(diffx)) / (abs(diffy)+abs(diffx))
+        speed = 1 * self.action_count
+        ratio = _abs(diffx) / (_abs(diffy)+_abs(diffx))
         speedx = speed * ratio
         speedy = speed * (1-ratio)
         obj.velocity_x -= speedx if diffx > 0 else -speedx
@@ -770,7 +794,7 @@ class Game(Screen):
                                  self.gifts, self.drones, self.mines):
             p.update()
             
-        if self.count > 1.0:
+        if self.count > 3.0:
             self.label.text = "FPS: %.1f" % (self.frames_count / self.count)
             self.count = self.frames_count = 0.0
             
@@ -1063,14 +1087,14 @@ class SkyBombersApp(App):
     
     def on_start(self):
         pass
-        #import cProfile
-        #self.profile = cProfile.Profile()
-        #self.profile.enable()
+        import cProfile
+        self.profile = cProfile.Profile()
+        self.profile.enable()
 
     def on_stop(self):
         pass
-        #self.profile.disable()
-        #self.profile.dump_stats('myapp.profile')
+        self.profile.disable()
+        self.profile.dump_stats('myapp.profile')
     
     def build(self, KEYS=KEYS):
         def on_key_down(window, keycode, *rest):
