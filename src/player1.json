@@ -1,0 +1,37 @@
+[
+    {
+        "type": "button",
+        "desc": "key for applying 'left'",
+        "section": "player1",
+        "title": "left",
+        "key": "left"
+    },
+    {
+        "type": "button",
+        "desc": "key for applying 'right'",
+        "section": "player1",
+        "title": "right",
+        "key": "right"
+    },
+    {
+        "type": "button",
+        "desc": "key for applying 'thrust'",
+        "section": "player1",
+        "title": "thrust",
+        "key": "thrust"
+    },
+    {
+        "type": "button",
+        "desc": "key for applying 'fire'",
+        "section": "player1",
+        "title": "fire",
+        "key": "fire"
+    },
+    {
+        "type": "button",
+        "desc": "key for applying 'special'",
+        "section": "player1",
+        "title": "special",
+        "key": "special"
+    }
+]
