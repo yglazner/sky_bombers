@@ -147,8 +147,9 @@ class Bullet(Sprite):
         self.counter = 0
         
     def hit_by(self, other):
-        self.active = False
-        self.counter = 40
+        if self.active:
+            self.active = False
+            self.counter = 40
         
         
     def update(self):
@@ -156,10 +157,11 @@ class Bullet(Sprite):
             self.center = self.owner.center
             self.first=0
         self.counter +=1
+        bingo = False
+        if self.active:
+            bingo = self.game.check_player_collision(self, [self.owner])
         
-        bingo = self.game.check_player_collision(self, [self.owner])
-        
-        if bingo and self.active:
+        if bingo:
             self.active = False
             bingo.hit_by(self)
             self.counter = 25
@@ -171,7 +173,6 @@ class Bullet(Sprite):
             self.velocity_y *= 0.75
             self.blow *= self.blow_rate
             self.blow_rate *= 0.90
-            
         super(Bullet, self).update()
         
 class BigBullet(Bullet):
@@ -795,8 +796,12 @@ class Game(Screen):
             p.update()
             
         if self.count > 3.0:
-            self.label.text = "FPS: %.1f" % (self.frames_count / self.count)
+            self.label.text = "FPS: %.1f\n bullets: %d" % (self.frames_count / self.count,
+                                                           len(self.bullets))
             self.count = self.frames_count = 0.0
+            if self.bullets:
+                b = self.bullets[0]
+                print(b.center, b.active, )
             
         if len(self.players+self.dead_players) < 2:
             s = self.manager.get_screen('game_over')
@@ -851,7 +856,7 @@ class SettingButtonItem(SettingItem):
     def _after(self, dt=None):
         self.l = Label(text=str(self.value))
         self.add_widget(self.l)
-        print('cool', self.value)
+        
     
     def on_release(self):
         pop = ButtonPop(value=self.value,
@@ -1086,13 +1091,13 @@ class SkyBombersApp(App):
     
     
     def on_start(self):
-        pass
+        return
         import cProfile
         self.profile = cProfile.Profile()
         self.profile.enable()
 
     def on_stop(self):
-        pass
+        return
         self.profile.disable()
         self.profile.dump_stats('myapp.profile')
     
