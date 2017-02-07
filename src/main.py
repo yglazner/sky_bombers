@@ -1,6 +1,5 @@
 '''
 Created on Mar 2, 2016
-
 @author: yoav
 '''
 from kivy.app import App
@@ -46,15 +45,15 @@ for joy_i in range(joystick.SDL_NumJoysticks()):
 
 
 class Sprite(Scatter):
-   
-   
-   
+
+
+
     source = StringProperty('')
     radius = NumericProperty(0.0)
     thrust =  NumericProperty(0.0)
-    
-    
-        
+
+
+
     def __init__(self, game, velocity_x=0.0, velocity_y=0.0,
                  **kwargs):
         self.game = game
@@ -64,12 +63,12 @@ class Sprite(Scatter):
                 attrs[attr] = kwargs.pop(attr)
         super(Sprite, self).__init__( **kwargs )
         for attr, value in attrs.items():
-            setattr(self, attr, value) 
-        
+            setattr(self, attr, value)
+
         self.velocity_x = velocity_x
         self.velocity_y = velocity_y
-       
-    def check_wall_collision(self):   
+
+    def check_wall_collision(self):
         x, y = self.center
         if x  < 0:
             return True
@@ -78,30 +77,30 @@ class Sprite(Scatter):
         if y > GlobalStuff.top:
             return True
         if y < 0:
-            return True    
-        
+            return True
+
     def update(self, plats=[],):
         thrust = self.thrust
         y_t = math.sin(radians(self.rotation)) * thrust
         x_t = math.cos(radians(self.rotation)) * thrust
-        
+
         self.velocity_x += x_t
         self.velocity_y += y_t
-        
+
         self.y += self.velocity_y
         self.x += self.velocity_x
-        
+
 #         self.velocity_x *= 0.998
 #         self.velocity_y *= 0.998
-        
-        
+
+
 
     def distance(self, other, sqrt=math.sqrt):
         a = (self.center_x - other.center_x) ** 2
         b = (self.center_y - other.center_y)  ** 2
         return sqrt(a+b)
-    
-    
+
+
     def collide(self, other, area=0):
         #this may make the game faster
         if area==0 and not self.collide_widget(other):
@@ -109,12 +108,12 @@ class Sprite(Scatter):
         d = self.distance(other)
         if d < (self.radius+other.radius+area):
             return 1
-        
-            
+
+
 
 class GlobalStuff(object):
-    
-    
+
+
     @classmethod
     def init(cls):
         cls.right = Window.width
@@ -125,33 +124,33 @@ class GlobalStuff(object):
         cls.center_y = Window.height / 2
         cls.size = cls.width, cls.height = Window.width, Window.height
 
-    
+
 class Bullet(Sprite):
-    
+
     blow = NumericProperty(1.0)
     damage = NumericProperty(1)
 
     def __init__(self, game, owner, direction, **kw):
-        super(Bullet, self).__init__(game, **kw)     
-        self.rotation = direction#owner.rotation   
+        super(Bullet, self).__init__(game, **kw)
+        self.rotation = direction#owner.rotation
         self.velocity_x = owner.velocity_x + math.cos(radians(self.rotation)) * 10
         self.velocity_y = owner.velocity_y +  math.sin(radians(self.rotation)) * 10
-        
+
         self.active = True
         self.first = 1
         self.owner = owner
-        
+
         self.center = -200, -200
         self.blow_rate = 2.0
         self.max_counter = 100
         self.counter = 0
-        
+
     def hit_by(self, other):
         if self.active:
             self.active = False
             self.counter = 40
-        
-        
+
+
     def update(self):
         if self.first:
             self.center = self.owner.center
@@ -160,7 +159,7 @@ class Bullet(Sprite):
         bingo = False
         if self.active:
             bingo = self.game.check_player_collision(self, [self.owner])
-        
+
         if bingo:
             self.active = False
             bingo.hit_by(self)
@@ -174,24 +173,24 @@ class Bullet(Sprite):
             self.blow *= self.blow_rate
             self.blow_rate *= 0.90
         super(Bullet, self).update()
-        
+
 class BigBullet(Bullet):
-    
+
     def __init__(self, *args, **kw):
         super(BigBullet, self).__init__(*args, **kw)
         self.size_hint_x *= 2
         self.size_hint_y *= 2
-        
+
 class HomingMissle(Bullet):
-    
-    
-    
+
+
+
     def update(self):
         speed = 0.5
         super(HomingMissle, self).update()
         p = self.game.check_player_collision(self, [self.owner], self.owner.radius*10)
         if p:
-            
+
             self.velocity_x += speed if p.center_x > self.center_x else -speed
             self.velocity_y += speed if p.center_y > self.center_y else -speed
 
@@ -202,7 +201,7 @@ class SineMissle(Bullet):
         self.speed_x = math.cos(radians(self.rotation)) * 30
         self.speed_y = math.sin(radians(self.rotation)) * 30
         self.max_counter = 200
-        
+
     def update(self):
         #TBD: play with the 10 value below (in the angle - the Dgima value, and in the speed)
         angle = (self.counter * 10) % 360
@@ -213,7 +212,7 @@ class SineMissle(Bullet):
             self.velocity_x = 10 * math.cos(radians(self.rotation+45))
             self.velocity_y = 10 * math.sin(radians(self.rotation+45))
         super(SineMissle, self).update()
-            
+
 class Mine(Bullet):
 
     def __init__(self, game, owner, **kw):
@@ -238,7 +237,7 @@ class AirCraft(Sprite):
                   SoundLoader.load('Music/shots/hit.mp3'),SoundLoader.load('Music/shots/hit.mp3'),
                   SoundLoader.load('Music/shots/ouch.mp3'),SoundLoader.load('Music/shots/ouch.mp3'),SoundLoader.load('Music/shots/ouch.mp3'),
                   SoundLoader.load('Music/shots/ouch.mp3'),SoundLoader.load('Music/shots/ouch.mp3')]
-                     
+
     dead_sounds = [SoundLoader.load('Music/shots/dead.mp3')
                      for _ in range(5)]
     fire_sounds = [SoundLoader.load('Music/shots/gunshot-00.mp3')
@@ -250,7 +249,7 @@ class AirCraft(Sprite):
     next_dead_sound = itertools.cycle(dead_sounds)
     next_hit_sound = itertools.cycle(hit_sounds)
     next_fire_sound = itertools.cycle(fire_sounds)
-    
+
     def __init__(self, game, **kw):
         super(AirCraft, self).__init__(game, **kw)
         self.velocity_x = 0.0 * math.cos(radians(self.rotation))
@@ -261,9 +260,9 @@ class AirCraft(Sprite):
         self.speed = 0.2
         self.special_bullets = []
         self.lives = 1
-        
 
-    
+
+
     def update(self):
         if self.lives<=0 or self.check_wall_collision():
             self.game.mark_dead(self)
@@ -271,14 +270,14 @@ class AirCraft(Sprite):
         super(AirCraft, self).update()
         self.velocity_x *=0.99
         self.velocity_y *=0.99
-        
+
     def hit_by(self, something):
         self.lives -= min(self.lives, something.damage)
         if self.lives == 0:
             next(self.next_dead_sound).play()
         else:
             next(self.next_hit_sound).play()
-            
+
     def fire(self):
         if self.reload > 0:
             return
@@ -290,12 +289,12 @@ class AirCraft(Sprite):
             B = sb.pop() if sb else Bullet
             bullet = B(self.game, self, d + (i*8*((i%2) or -1)))
             self.game.add_bullet(bullet)
-        
-    
-        
+
+
+
 class Drone(AirCraft):
-    
-    
+
+
     def __init__(self, game, creator):
         owner = self.owner = creator.owner
         self.rotation = owner.rotation
@@ -309,13 +308,13 @@ class Drone(AirCraft):
         self.g = owner.g
         self.b = owner.b
         self.a = owner.a
-        
+
     def update(self):
         if self._first_time:
             self._first_time = 0
             self.center = self.owner.center
             self.rotation= self.owner.rotation
-       
+
         area = self.radius
         self.thrust = 1
         p = None
@@ -323,7 +322,7 @@ class Drone(AirCraft):
             area += self.radius * 10
             p = self.game.check_player_collision(self, [self, self.owner], area)
             if p: break
-        if p:      
+        if p:
             b = p.center_x - self.center_x
             a = p.center_y - self.center_y
             if b!=0:
@@ -335,35 +334,40 @@ class Drone(AirCraft):
                 if b < 0:
                     d = 180 - d
                 self.rotation = d % 360
-                        
+
         self.fire()
         super(Drone, self).update()
         self.velocity_x *= 0.50
         self.velocity_y *= 0.50
-        
+
     def dead(self):
         self.creator.drone_dead()
-         
 
-class Player(AirCraft):    
-    
-    
+
+class Player(AirCraft):
+
+
     def __init__(self, game, name, team, keys, **kw):
         super(Player, self).__init__(game, **kw)
-        
+
         self.keys = dict(keys)
         self.name = name
         self.team = team
         self.speed = 0.2
         self.lives = 5
-        self.specials = set()
-        
-    def add_special(self, s):
-        if type(s) not in map(type, self.specials):
-            self.specials.add(s) 
+        self.specials_defense = set()
+        self.specials_attack = set()
+
+    def add_special_defense(self, s):
+        if type(s) not in map(type, self.specials_defense):
+            self.specials_defense.add(s)
+
+    def add_special_attack(self, s):
+        if type(s) not in map(type, self.specials_attack):
+            self.specials_attack.add(s)
 
     def update(self,  user_pressed=KEYS):
-        
+
         if self.lives <= 0 or self.check_wall_collision():
             self.lives = 0
             self.counter = 20
@@ -374,20 +378,22 @@ class Player(AirCraft):
         if user_pressed[keys['left']]:
             self.rotation += 10
             print(self.rotation)
-        elif user_pressed[keys['right']]:    
+        elif user_pressed[keys['right']]:
             self.rotation -= 10
             print(self.rotation)
         if user_pressed[keys['thrust']]:
             self.thrust = self.speed
         if user_pressed[keys['fire']]:
             self.fire()
-        if user_pressed[keys['special']]:
-            self.activate_special()
-        
+        if user_pressed[keys['special_defense']]:
+            self.activate_special_defense()
+        if user_pressed[keys['special_attack']]:
+            self.activate_special_attack()
+
         super(Player, self).update()
         self.velocity_x *= 0.99
         self.velocity_y *= 0.99
-        
+
     def play_dead(self):
         self.counter -= 1
         if self.counter < 0:
@@ -397,24 +403,27 @@ class Player(AirCraft):
         self.size_hint_x * 1.05
         self.a *= 0.9
         super(Player, self).update()
-        
-    def activate_special(self):
-        for s in self.specials:
+
+    def activate_special_defense(self):
+        for s in self.specials_defense:
             s.activate(self)
-    
-    
-            
+
+    def activate_special_attack(self):
+        for s in self.specials_attack:
+            s.activate(self)
+
+
 
 
 class BaseGift(Sprite):
-    
+
     src = StringProperty("")
-    
+
     def __init__(self, game, **kwargs):
         super(BaseGift, self).__init__(game, **kwargs)
         self.src = self.SOURCE
         self.count = 0
-        
+
     def update(self):
         self.count = (self.count+1) % 3
         if self.count:
@@ -426,54 +435,54 @@ class BaseGift(Sprite):
         else:
             if self.check_wall_collision():
                 self.game.remove_gift(self)
-                return 
+                return
         super(BaseGift, self).update()
 
     def apply_gift(self, player):
         raise NotImplementedError("BaseGift is not a real Gift :)")
 
 class SpeedGift(BaseGift):
-    
+
     SOURCE = "imgs/speedometer-32.png"
-    
-    def apply_gift(self, player):        
+
+    def apply_gift(self, player):
         player.speed *= 1.3
         print("player %s thrust is %d" % (player.name, player.thrust))
 
 class LivesGift(BaseGift):
-    
+
     SOURCE = "imgs/heart.png"
-    
+
     def apply_gift(self, player):
         print("player %s had %d lives" % (player.name, player.lives))
         player.lives += 1
         print("and now he has %d lives" % (player.lives))
-        
+
 class ExtraShotGift(BaseGift):
 
     SOURCE = "imgs/triple_bullet.png"
-    
+
     def apply_gift(self, player):
         player.bullets += 1
-        
+
 class HomingMissleGift(BaseGift):
-    
+
     SOURCE = 'imgs/homing_missle_gift.png'
-    
+
     def apply_gift(self, player):
         player.special_bullets.append(HomingMissle)
-        
+
 class SineMissleGift(BaseGift):
-    
+
     SOURCE = 'imgs/rocket.png'
-    
+
     def apply_gift(self, player):
         player.special_bullets.append(SineMissle)
 
 class BiggerBulletGift(BaseGift):
-    
+
     SOURCE = 'imgs/big_bullet_gift.png'
-    
+
     def apply_gift(self, player):
         player.special_bullets.append(BigBullet)
 
@@ -506,55 +515,55 @@ class ReverseKeysGift(BaseGift):
 
 
 class ElectroMagnetShield(BaseGift):
-    
+
     SOURCE = "imgs/e-m-shield.png"
-    
+
     def apply_gift(self, player):
-        player.add_special(ElectroMagnet())
-        
+        player.add_special_defense(ElectroMagnet())
+
 
 
 
 class DroneGift(BaseGift):
     SOURCE = 'imgs/drone.png'
-    
+
     def apply_gift(self, player):
-        player.add_special(FightingDroneSpecial())
+        player.add_special_attack(FightingDroneSpecial())
 
 
 class MineGift(BaseGift):
     SOURCE = 'imgs/mine.png'
 
     def apply_gift(self, player):
-        player.add_special(MineSpecial())
-        
+        player.add_special_attack(MineSpecial())
+
 gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
               FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield,
               DroneGift, MineGift, BiggerBulletGift, SineMissleGift
               ]
 
 class Special(object):
-    
+
     COOLDOWN = 3
-    
+
     def __init__(self):
         self.last_activation = 0
-    
+
     def activate(self, owner):
         self.owner = owner
         t = time.time()
         if t - self.last_activation > self.COOLDOWN:
             self.last_activation = t
             self.engage()
-        
+
 class FightingDroneSpecial(Special):
-    
+
     COOLDOWN = 10
-    
+
     def __init__(self):
         super(FightingDroneSpecial, self).__init__()
         self.active = 0
-    
+
     def engage(self):
         if self.active:
             return
@@ -562,17 +571,17 @@ class FightingDroneSpecial(Special):
         owner = self.owner
         d = Drone(owner.game, creator=self,
                   )
-        
+
         d.rotation = owner.rotation
         d.center = owner.center
         d.size_hint = 0.01, 0.01
         owner.game.add_drone(d)
-        
+
     def drone_dead(self):
         self.active = 0
         self.last_activation = time.time()
-        
-        
+
+
 
 class ElectroMagnet(Special):
 
@@ -580,18 +589,18 @@ class ElectroMagnet(Special):
         owner = self.owner
         game = owner.game
         area = owner.radius * 10
-        game.add_pulse(self.owner.center, area) 
+        game.add_pulse(self.owner.center, area)
         speed = 10
         for obj in game.flying_objects:
             if obj == owner: continue
             if obj.collide(owner, area):
-                diffx = owner.center_x - obj.center_x 
+                diffx = owner.center_x - obj.center_x
                 diffy =  owner.center_y - obj.center_y
-                
+
                 ratio = abs(diffx) / (abs(diffx)+abs(diffy) + 0.1)
                 obj.velocity_x -= ratio * speed * (1 if diffx>0 else -1)
                 obj.velocity_y -= (1-ratio) * speed * (1 if diffy>0 else -1)
-    
+
 class MineSpecial(Special):
     COOLDOWN = 3.5
 
@@ -906,7 +915,7 @@ class ConfigScreen(Screen):
     
     s = ObjectProperty(None)
     
-    player_keys = 'left right thrust fire special'.split()
+    player_keys = 'left right thrust fire special_defense special_attack'.split()
     
     def __init__(self, **kw):
         super(ConfigScreen, self).__init__(**kw)
