@@ -355,16 +355,14 @@ class Player(AirCraft):
         self.team = team
         self.speed = 0.2
         self.lives = 5
-        self.specials_defense = set()
-        self.specials_attack = set()
+        self.specials_defense = None#set()
+        self.specials_attack = None#set()
 
     def add_special_defense(self, s):
-        if type(s) not in map(type, self.specials_defense):
-            self.specials_defense.add(s)
+        self.specials_defense = s
 
     def add_special_attack(self, s):
-        if type(s) not in map(type, self.specials_attack):
-            self.specials_attack.add(s)
+        self.specials_attack = s
 
     def update(self,  user_pressed=KEYS):
 
@@ -405,12 +403,12 @@ class Player(AirCraft):
         super(Player, self).update()
 
     def activate_special_defense(self):
-        for s in self.specials_defense:
-            s.activate(self)
+        if self.specials_defense != None:
+            self.specials_defense.activate(self)
 
     def activate_special_attack(self):
-        for s in self.specials_attack:
-            s.activate(self)
+        if self.specials_attack != None:
+            self.specials_attack.activate(self)
 
 
 
@@ -474,7 +472,7 @@ class HomingMissleGift(BaseGift):
 
 class SineMissleGift(BaseGift):
 
-    SOURCE = 'imgs/rocket.png'
+    SOURCE = 'imgs/skull.png'
 
     def apply_gift(self, player):
         player.special_bullets.append(SineMissle)
