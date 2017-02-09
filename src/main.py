@@ -353,7 +353,7 @@ class Player(AirCraft):
         self.keys = dict(keys)
         self.name = name
         self.team = team
-        self.speed = 0.2
+        self.speed = 0.33
         self.lives = 5
         self.specials_defense = None#set()
         self.specials_attack = None#set()
