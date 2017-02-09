@@ -90,3 +90,5 @@ ENV/
 
 #Skybombers configs
 player*.json
+.project
+*.pydevproject
