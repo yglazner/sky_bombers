@@ -659,7 +659,36 @@ class Planet(Sprite):
         speedy = speed * (1-ratio)
         obj.velocity_x -= speedx if diffx > 0 else -speedx
         obj.velocity_y -= speedy if diffy > 0 else -speedy
-        
+
+
+class Portal(Sprite):
+    START_COUNT = 0
+
+    color = ListProperty([1.0, 0.0, 0.0, 0.5])
+
+    def __init__(self, game, color, size_hint, pos_hint, exit_point, portal_id):
+        self.color = color
+        self.damage = 99
+        self.exit_point = exit_point
+        self.portal_id = portal_id
+        super(Portal, self).__init__(game, size_hint=size_hint, pos_hint=pos_hint)
+
+
+
+    def update(self):
+        area = self.radius * 3
+        for obj in self.game.players:
+            if obj.collide(self):
+                h = GlobalStuff.height
+                w = GlobalStuff.width
+                destination_id = (self.portal_id + 1) % len(self.game.portals)
+                entry_point_x = w * self.pos_hint['center_x'] - obj.center_x
+                entry_point_y = h * self.pos_hint['center_y'] - obj.center_y
+                obj.center_x = w * self.game.portals[destination_id].pos_hint['center_x'] + entry_point_x
+                obj.center_y = h * self.game.portals[destination_id].pos_hint['center_y'] + entry_point_y
+                obj.update()
+
+
 
 class Pulse(Sprite):
     
@@ -694,6 +723,7 @@ class Game(Screen):
             self.area.remove_widget(w)
         self.players = []
         self.planets = []
+        self.portals = []
         self.gifts = []
         self.dead_players = []
         self.bullets = []
@@ -722,7 +752,17 @@ class Game(Screen):
                                  'center_y': planet['y']})
             self.area.add_widget(p)
             self.planets.append(p)
-            
+
+        for portal in self.level['portals']:
+            p = Portal(self,
+                       color=portal['color'],
+                       size_hint=portal['size'],
+                       pos_hint={'center_x': portal['x'],
+                                 'center_y': portal['y']},
+                       exit_point=portal['exit_point'],
+                       portal_id = portal['portal_id'])
+            self.area.add_widget(p)
+            self.portals.append(p)
         
         self.background_sound.loop = True
         self.background_sound.volume = 0.5
@@ -823,6 +863,8 @@ class Game(Screen):
         for b in self.bullets:
             b.update()
         for p in self.planets:
+            p.update()
+        for p in self.portals:
             p.update()
         
         for p in itertools.chain(self.players, self.dead_players,
