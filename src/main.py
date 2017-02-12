@@ -375,10 +375,10 @@ class Player(AirCraft):
         self.thrust = 0
         if user_pressed[keys['left']]:
             self.rotation += 10
-            print(self.rotation)
+            #print(self.rotation)
         elif user_pressed[keys['right']]:
             self.rotation -= 10
-            print(self.rotation)
+            #print(self.rotation)
         if user_pressed[keys['thrust']]:
             self.thrust = self.speed
         if user_pressed[keys['fire']]:
@@ -671,24 +671,49 @@ class Portal(Sprite):
         self.damage = 99
         self.exit_point = exit_point
         self.portal_id = portal_id
+        self._objs = set()
         super(Portal, self).__init__(game, size_hint=size_hint, pos_hint=pos_hint)
-
+        
 
 
     def update(self):
-        area = self.radius * 3
+        
         for obj in self.game.players:
-            if obj.collide(self):
-                h = GlobalStuff.height
-                w = GlobalStuff.width
-                destination_id = (self.portal_id + 1) % len(self.game.portals)
-                entry_point_x = w * self.pos_hint['center_x'] - obj.center_x
-                entry_point_y = h * self.pos_hint['center_y'] - obj.center_y
-                obj.center_x = w * self.game.portals[destination_id].pos_hint['center_x'] + entry_point_x
-                obj.center_y = h * self.game.portals[destination_id].pos_hint['center_y'] + entry_point_y
-                obj.update()
-
-
+            if obj.collide(self) and not obj in self._objs:
+                
+                self.obj_in_portal(obj)
+                
+    def obj_in_portal(self, obj):
+        destination_id = (self.portal_id + 1) % len(self.game.portals)
+        entry_point_x = (self.center_x - obj.center_x) * 1.20
+        entry_point_y = (self.center_y - obj.center_y) * 1.20
+        scale = obj.scale
+        a = Animation(center_x=self.center_x, center_y=self.center_y, scale=0.25, d=0.150)
+        
+        
+        def f(obj):
+            self.unmark(obj)
+            portal = self.game.portals[destination_id]
+            obj.center = portal.center
+            a = Animation(center_x= portal.center_x + entry_point_x,
+                          center_y= portal.center_y + entry_point_y,
+                          scale=scale, d=0.150)
+            def b(obj):
+                portal.unmark(obj)
+            a.on_complete = b
+            portal.mark(obj)
+            a.start(obj)
+            
+                
+        a.on_complete = f
+        self.mark(obj)
+        a.start(obj)
+        
+    def mark(self, obj):
+        self._objs.add(obj)
+        
+    def unmark(self, obj):
+        self._objs.remove(obj)
 
 class Pulse(Sprite):
     
@@ -875,9 +900,9 @@ class Game(Screen):
             self.label.text = "FPS: %.1f\n bullets: %d" % (self.frames_count / self.count,
                                                            len(self.bullets))
             self.count = self.frames_count = 0.0
-            if self.bullets:
-                b = self.bullets[0]
-                print(b.center, b.active, )
+            #if self.bullets:
+                #b = self.bullets[0]
+                #print(b.center, b.active, )
             
         if len(self.players+self.dead_players) < 2:
             s = self.manager.get_screen('game_over')
@@ -915,7 +940,7 @@ class ButtonPop(Popup):
         keys = [k for k, v in  KEYS.items() if v]
         if keys: 
             self.value = keys[0]
-            print(self.value)
+            #print(self.value)
             return self.dismiss()
         
         Clock.schedule_once(self._get_key,0.01)
