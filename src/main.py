@@ -753,7 +753,7 @@ class Game(Screen):
             self.area.add_widget(p)
             self.planets.append(p)
 
-        for portal in self.level['portals']:
+        for portal in self.level.get('portals', []):
             p = Portal(self,
                        color=portal['color'],
                        size_hint=portal['size'],
@@ -836,7 +836,7 @@ class Game(Screen):
         if p in ['left', 'right']:
             y = (GlobalStuff.top - 20) * random.random() + 10
             if p == 'left':
-                x = 0
+                x = 50
                 stuff['velocity_x'] = 1* speed
             else:
                 x = GlobalStuff.right
@@ -847,7 +847,7 @@ class Game(Screen):
                 y = GlobalStuff.top
                 stuff['velocity_y'] = -1*speed
             else:
-                y = 0
+                y = 50
                 stuff['velocity_y'] = 1*speed
     
         gift = gen_gift(self, center_x=x, center_y=y, **stuff)
@@ -889,7 +889,7 @@ class Game(Screen):
             winner = 'Team %s' % (self.players[0].team)
             self.gameover(winner)
         
-        if random.random() > 0.99:
+        if random.random() > 0.97:
             self.create_gift()
             
         #wall collisions
