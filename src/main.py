@@ -774,7 +774,7 @@ class Pulse(Sprite):
 
 class Game(Screen):
     area = ObjectProperty(None)
-    
+    foreground = ObjectProperty(None)
     
     
     def __init__(self, **kw):
@@ -820,10 +820,36 @@ class Game(Screen):
             self.portals.append(p)
         
 
+
+    def _create_plantes(self, p):
+        for planet in self.level['planets']:
+            p = Planet(self, 
+                color=planet['color'], 
+                size_hint=planet['size'], 
+                pos_hint={'center_x':planet['x'], 
+                    'center_y':planet['y']})
+            self.area.add_widget(p)
+            self.planets.append(p)
+        
+        
+
+
+    def _create_clouds(self):
+        for cloud in self.level.get('clouds', []):
+            c = Cloud(self, 
+                size_hint=cloud['size'], 
+                pos_hint={'center_x':cloud['x'], 
+                    'center_y':cloud['y']})
+            self.foreground.add_widget(c)
+         
+            self.clouds.append(c)
+
     def on_enter(self, *args):
         Screen.on_enter(self, *args)
-        for w in list(self.area.children):
-            self.area.remove_widget(w)
+        for a in [self.area, self.foreground]:
+            for w in list(a.children) :
+                a.remove_widget(w)
+        
         self.players = []
         self.planets = []
         self.portals = []
@@ -853,24 +879,9 @@ class Game(Screen):
             self.players.append(p)
             self.area.add_widget(p)
             
-        for planet in self.level['planets']:
-            p = Planet(self, 
-                       color=planet['color'],
-                       size_hint=planet['size'], 
-                       pos_hint={'center_x': planet['x'],
-                                 'center_y': planet['y']})
-            self.area.add_widget(p)
-            self.planets.append(p)
+        self._create_plantes(p)
 
-        for cloud in self.level.get('clouds', []):
-            c = Cloud(self,
-                       size_hint=cloud['size'],
-                       pos_hint={'center_x': cloud['x'],
-                                 'center_y': cloud['y']})
-
-            self.area.add_widget(c)
-            #self.area.auto_bring_to_front(c)
-            self.clouds.append(c)
+        self._create_clouds()
 
         
         self.background_sound.loop = True

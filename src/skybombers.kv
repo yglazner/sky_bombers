@@ -70,6 +70,7 @@
     Image:
         size: root.radius*2.1, root.radius*2.1
         center: root.size[0]/2, root.size[1]/2
+        opacity: 0.8
         source: "imgs/cloud.png"
         strech: True
         keep_ratio: False
@@ -103,7 +104,7 @@
 
 <Game>:
     area: area
-    
+    foreground: foreground
 #     Image:
 #         id: background
 #         size: root.size
@@ -112,6 +113,8 @@
 #         keep_ratio: False            
     FloatLayout:
         id: area
+    FloatLayout:
+        id: foreground
     Label:
         text: 'FPS'
         pos_hint: {'x': 0.50, 'y':0.80}
