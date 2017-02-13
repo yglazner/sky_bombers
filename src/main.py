@@ -144,7 +144,7 @@ class Bullet(Sprite):
         self.blow_rate = 2.0
         self.max_counter = 100
         self.counter = 0
-
+        self.a = 1
     def hit_by(self, other):
         if self.active:
             self.active = False
@@ -227,8 +227,11 @@ class Mine(Bullet):
     def update(self):
         if self.counter == 75:
             self.owner = None
+            Animation(a=0, d=0.8).start(self)
 
         super(Mine, self).update()
+        if not self.active:
+            self.a = 1
 
 
 class AirCraft(Sprite):
