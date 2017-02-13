@@ -701,7 +701,7 @@ class Portal(Sprite):
 
     def update(self):
         
-        for obj in self.game.flying_objects:
+        for obj in itertools.chain(self.game.players, self.drones):
             if obj.collide(self) and not obj in self._objs:
                 
                 self.obj_in_portal(obj)
