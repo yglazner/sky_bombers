@@ -35,6 +35,20 @@
         Line:
             circle: (self.size[0]/2, self.size[1]/2,  (self.size[0]+self.size[1]) / 4.0)
 
+<Arrow>:
+    canvas.before:
+        Color:
+            rgba:  1,1,1,1
+        Line:
+            circle: (self.size[0]/2, self.size[1]/2,  (self.size[0]+self.size[1]) / 4.0)
+
+    Image:
+        size: root.radius*2, root.radius*2
+        center: root.size[0]/2, root.size[1]/2
+        source: "imgs/arrow.png"
+        strech: True
+        keep_ratio: False
+
 <Portal>:
     
 #     canvas.before:

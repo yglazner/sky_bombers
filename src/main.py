@@ -17,7 +17,7 @@ from kivy.uix.label import Label
 from kivy.uix.scatter import Scatter
 import cmath
 import math
-from math import radians, tan, atan
+from math import radians, tan, atan, sin, cos
 import random
 from kivy.config import Config, ConfigParser
 import kivyoav.autosized_label
@@ -81,8 +81,8 @@ class Sprite(Scatter):
 
     def update(self, plats=[],):
         thrust = self.thrust
-        y_t = math.sin(radians(self.rotation)) * thrust
-        x_t = math.cos(radians(self.rotation)) * thrust
+        y_t = sin(radians(self.rotation)) * thrust
+        x_t = cos(radians(self.rotation)) * thrust
 
         self.velocity_x += x_t
         self.velocity_y += y_t
@@ -95,10 +95,10 @@ class Sprite(Scatter):
 
 
 
-    def distance(self, other, sqrt=math.sqrt):
+    def distance(self, other):
         a = (self.center_x - other.center_x) ** 2
         b = (self.center_y - other.center_y)  ** 2
-        return sqrt(a+b)
+        return a+b
 
 
     def collide(self, other, area=0):
@@ -106,7 +106,7 @@ class Sprite(Scatter):
         if area==0 and not self.collide_widget(other):
             return
         d = self.distance(other)
-        if d < (self.radius+other.radius+area):
+        if d < ((self.radius+other.radius+area)**2):
             return 1
 
 
@@ -133,8 +133,8 @@ class Bullet(Sprite):
     def __init__(self, game, owner, direction, **kw):
         super(Bullet, self).__init__(game, **kw)
         self.rotation = direction#owner.rotation
-        self.velocity_x = owner.velocity_x + math.cos(radians(self.rotation)) * 10
-        self.velocity_y = owner.velocity_y +  math.sin(radians(self.rotation)) * 10
+        self.velocity_x = owner.velocity_x + cos(radians(self.rotation)) * 10
+        self.velocity_y = owner.velocity_y +  sin(radians(self.rotation)) * 10
 
         self.active = True
         self.first = 1
@@ -683,6 +683,25 @@ class Planet(Sprite):
         obj.velocity_x -= speedx if diffx > 0 else -speedx
         obj.velocity_y -= speedy if diffy > 0 else -speedy
 
+class Arrow(Sprite):
+    
+    def __init__(self, game, **kw):
+        
+        self.power = 3.5
+        super(Arrow, self).__init__(game, **kw)
+        self.rotation = kw['rotation']
+    def update(self):
+        for obj in self.game.flying_objects:
+            if obj.collide(self):
+                self.apply_speed(obj)
+                
+    def apply_speed(self, obj):
+        p = self.power
+        angle = radians(self.rotation)
+        obj.velocity_y += sin(angle) * p
+        obj.velocity_x += cos(angle) * p
+        
+        
 
 class Cloud(Sprite):
 
@@ -711,7 +730,7 @@ class Portal(Sprite):
 
     def update(self):
         
-        for obj in itertools.chain(self.game.players, self.drones):
+        for obj in itertools.chain(self.game.players, self.game.drones):
             if obj.collide(self) and not obj in self._objs:
                 
                 self.obj_in_portal(obj)
@@ -775,6 +794,32 @@ class Game(Screen):
     def flying_objects(self):
         return itertools.chain(self.players, self.bullets, self.drones)
         
+
+    def _create_arrows(self):
+        for arrow in self.level.get('arrows', []):
+            a = Arrow(self, 
+                pos_hint={'center_x':arrow['x'], 
+                    'center_y':arrow['y']}, 
+                size_hint=arrow['size'],
+                rotation=arrow['rotation'])
+            self.area.add_widget(a)
+            self.arrows.append(a)
+        
+
+
+    def _create_portals(self):
+        for portal in self.level.get('portals', []):
+            p = Portal(self, 
+                color=portal['color'], 
+                size_hint=portal['size'], 
+                pos_hint={'center_x':portal['x'], 
+                    'center_y':portal['y']}, 
+                exit_point=portal['exit_point'], 
+                portal_id=portal['portal_id'])
+            self.area.add_widget(p)
+            self.portals.append(p)
+        
+
     def on_enter(self, *args):
         Screen.on_enter(self, *args)
         for w in list(self.area.children):
@@ -782,6 +827,7 @@ class Game(Screen):
         self.players = []
         self.planets = []
         self.portals = []
+        self.arrows = []
         self.clouds = []
         self.gifts = []
         self.dead_players = []
@@ -794,17 +840,9 @@ class Game(Screen):
                       (w, h * 9, -45), (w * 9, h * 9, -135), (w * 5, h, 90),
                       ]
         
-
-        for portal in self.level.get('portals', []):
-            p = Portal(self,
-                       color=portal['color'],
-                       size_hint=portal['size'],
-                       pos_hint={'center_x': portal['x'],
-                                 'center_y': portal['y']},
-                       exit_point=portal['exit_point'],
-                       portal_id = portal['portal_id'])
-            self.area.add_widget(p)
-            self.portals.append(p)
+        self._create_portals()
+        self._create_arrows()   
+        
 
         for p, s, pos in zip(ConfigScreen.players, self.players_setup, positions):
             if not s['play']: continue
@@ -931,13 +969,12 @@ class Game(Screen):
         self.count += dt
         self.frames_count += 1
         random.shuffle(self.players)
-        for b in self.bullets:
-            b.update()
-        for p in self.planets:
-            p.update()
-        for p in self.portals:
-            p.update()
-        
+        for o in itertools.chain(self.bullets,
+                                 self.planets,
+                                 self.portals,
+                                 self.arrows):
+            o.update()
+       
         for p in itertools.chain(self.players, self.dead_players,
                                  self.gifts, self.drones, self.mines):
             p.update()
@@ -1296,4 +1333,5 @@ if __name__ == '__main__':
     #Config.fullscreen = 1
     #Config.set('graphics', 'fullscreen', 'auto')
     Window.fullscreen = 'auto'
+    Clock.max_iteration *= 3
     SkyBombersApp().run()
