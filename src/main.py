@@ -492,19 +492,15 @@ class FasterReloadGift(BaseGift):
     SOURCE = "imgs/ammo.png"
 
     def apply_gift(self, player):
-        print("player %s need %d ms for reload" % (player.name, player.reload_time))
         player.reload_time -= 5
         if player.reload_time <=5:
             player.reload_time = 5
-        print("and now he needs only %d ms" % (player.reload_time))
 
 class SlowerReloadGift(BaseGift):
     SOURCE = "imgs/skull.png"
 
     def apply_gift(self, player):
-        print("player %s need %d ms for reload" % (player.name, player.reload_time))
         player.reload_time += 5
-        print("and now he needs %d ms MUHAHAHA" % (player.reload_time))
 
 class ReverseKeysGift(BaseGift):
     SOURCE = "imgs/skull.png"
@@ -718,11 +714,11 @@ class Portal(Sprite):
 
     color = ListProperty([1.0, 0.0, 0.0, 0.5])
 
-    def __init__(self, game, color, size_hint, pos_hint, exit_point, portal_id):
+    def __init__(self, game, color, size_hint, pos_hint, portal_id, destination_id):
         self.color = color
         self.damage = 99
-        self.exit_point = exit_point
         self.portal_id = portal_id
+        self.destination_id = destination_id
         self._objs = set()
         super(Portal, self).__init__(game, size_hint=size_hint, pos_hint=pos_hint)
 
@@ -736,7 +732,7 @@ class Portal(Sprite):
                 self.obj_in_portal(obj)
                 
     def obj_in_portal(self, obj):
-        destination_id = (self.portal_id + 1) % len(self.game.portals)
+        destination_id = self.destination_id#(self.portal_id + 1) % len(self.game.portals)
         entry_point_x = (self.center_x - obj.center_x) * 1.20
         entry_point_y = (self.center_y - obj.center_y) * 1.20
         scale = obj.scale
@@ -814,8 +810,8 @@ class Game(Screen):
                 size_hint=portal['size'], 
                 pos_hint={'center_x':portal['x'], 
                     'center_y':portal['y']}, 
-                exit_point=portal['exit_point'], 
-                portal_id=portal['portal_id'])
+                portal_id=portal['portal_id'],
+                destination_id=portal['destination_id'])
             self.area.add_widget(p)
             self.portals.append(p)
         
