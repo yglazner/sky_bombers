@@ -299,7 +299,7 @@ class Drone(AirCraft):
         owner = self.owner = creator.owner
         self.rotation = owner.rotation
         super(Drone, self).__init__(game)
-        self.speed = 0.02
+        self.speed = 0.1
         self.reload_time = self.owner.reload_time * 2
         self._first_time = 1
         self.name = "Drone"
@@ -316,7 +316,7 @@ class Drone(AirCraft):
             self.rotation= self.owner.rotation
 
         area = self.radius
-        self.thrust = 1
+        self.thrust = self.speed
         p = None
         for _ in range(10):
             area += self.radius * 10
@@ -337,8 +337,8 @@ class Drone(AirCraft):
 
         self.fire()
         super(Drone, self).update()
-        self.velocity_x *= 0.50
-        self.velocity_y *= 0.50
+        self.velocity_x *= 0.99
+        self.velocity_y *= 0.99
 
     def dead(self):
         self.creator.drone_dead()
@@ -678,7 +678,7 @@ class Portal(Sprite):
 
     def update(self):
         
-        for obj in self.game.players:
+        for obj in self.game.flying_objects:
             if obj.collide(self) and not obj in self._objs:
                 
                 self.obj_in_portal(obj)
@@ -760,6 +760,17 @@ class Game(Screen):
                       (w, h * 9, -45), (w * 9, h * 9, -135), (w * 5, h, 90),
                       ]
         
+        for portal in self.level.get('portals', []):
+            p = Portal(self,
+                       color=portal['color'],
+                       size_hint=portal['size'],
+                       pos_hint={'center_x': portal['x'],
+                                 'center_y': portal['y']},
+                       exit_point=portal['exit_point'],
+                       portal_id = portal['portal_id'])
+            self.area.add_widget(p)
+            self.portals.append(p)
+        
         for p, s, pos in zip(ConfigScreen.players, self.players_setup, positions):
             if not s['play']: continue
             p = Player(self, team=s['team_name'], **p)
@@ -778,16 +789,7 @@ class Game(Screen):
             self.area.add_widget(p)
             self.planets.append(p)
 
-        for portal in self.level.get('portals', []):
-            p = Portal(self,
-                       color=portal['color'],
-                       size_hint=portal['size'],
-                       pos_hint={'center_x': portal['x'],
-                                 'center_y': portal['y']},
-                       exit_point=portal['exit_point'],
-                       portal_id = portal['portal_id'])
-            self.area.add_widget(p)
-            self.portals.append(p)
+        
         
         self.background_sound.loop = True
         self.background_sound.volume = 0.5
@@ -1106,7 +1108,7 @@ class GameSetup(Screen):
                         for _ in range(6)]
         super(GameSetup, self).__init__(**kw)
         
-        self.level = 1
+        self.level = 3
         
     def level_click(self):
         self.level += 1
