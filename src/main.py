@@ -519,7 +519,12 @@ class ElectroMagnetShield(BaseGift):
     def apply_gift(self, player):
         player.add_special_defense(ElectroMagnet())
 
+class InvisibilityGift(BaseGift):
 
+    SOURCE = "imgs/invisible.png"
+
+    def apply_gift(self, player):
+        player.add_special_defense(Invisibility())
 
 
 class DroneGift(BaseGift):
@@ -537,7 +542,7 @@ class MineGift(BaseGift):
 
 gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
               FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield,
-              DroneGift, MineGift, BiggerBulletGift, SineMissleGift
+              DroneGift, MineGift, BiggerBulletGift, SineMissleGift, InvisibilityGift,
               ]
 
 class Special(object):
@@ -599,6 +604,21 @@ class ElectroMagnet(Special):
                 obj.velocity_x -= ratio * speed * (1 if diffx>0 else -1)
                 obj.velocity_y -= (1-ratio) * speed * (1 if diffy>0 else -1)
 
+class Invisibility(Special):
+    COOLDOWN = 7.5
+
+    
+    def reappear(self, dt=None):
+        Animation(a=self._old_alpha, d=0.165).start(self.owner)
+    
+    
+    def engage(self):
+        if self.owner.a < 0.2:
+            return
+        self._old_alpha = self.owner.a
+        Animation(a=0.0, d=0.165).start(self.owner)
+        Clock.schedule_once(self.reappear, timeout=3.1)
+         
 class MineSpecial(Special):
     COOLDOWN = 3.5
 
@@ -916,7 +936,7 @@ class Game(Screen):
             winner = 'Team %s' % (self.players[0].team)
             self.gameover(winner)
         
-        if random.random() > 0.97:
+        if random.random() > 0.985:
             self.create_gift()
             
         #wall collisions
