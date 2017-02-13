@@ -50,7 +50,17 @@
         source: "imgs/portal.png"
         strech: True
         keep_ratio: False
-        
+
+<Cloud>:
+
+    Image:
+        size: root.radius*2.1, root.radius*2.1
+        center: root.size[0]/2, root.size[1]/2
+        source: "imgs/cloud.png"
+        strech: True
+        keep_ratio: False
+
+
 <AirCraft>:
     canvas.before:
         Color:

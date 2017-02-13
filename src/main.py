@@ -684,6 +684,16 @@ class Planet(Sprite):
         obj.velocity_y -= speedy if diffy > 0 else -speedy
 
 
+class Cloud(Sprite):
+
+    #color = ListProperty([1.0, 0.0, 0.0, 0.5])
+
+    def __init__(self, game, size_hint, pos_hint):
+        self.damage = 99
+        self._objs = set()
+        super(Cloud, self).__init__(game, size_hint=size_hint, pos_hint=pos_hint)
+        self.auto_bring_to_front = True
+
 class Portal(Sprite):
     START_COUNT = 0
 
@@ -696,7 +706,7 @@ class Portal(Sprite):
         self.portal_id = portal_id
         self._objs = set()
         super(Portal, self).__init__(game, size_hint=size_hint, pos_hint=pos_hint)
-        
+
 
 
     def update(self):
@@ -772,6 +782,7 @@ class Game(Screen):
         self.players = []
         self.planets = []
         self.portals = []
+        self.clouds = []
         self.gifts = []
         self.dead_players = []
         self.bullets = []
@@ -783,6 +794,7 @@ class Game(Screen):
                       (w, h * 9, -45), (w * 9, h * 9, -135), (w * 5, h, 90),
                       ]
         
+
         for portal in self.level.get('portals', []):
             p = Portal(self,
                        color=portal['color'],
@@ -793,7 +805,7 @@ class Game(Screen):
                        portal_id = portal['portal_id'])
             self.area.add_widget(p)
             self.portals.append(p)
-        
+
         for p, s, pos in zip(ConfigScreen.players, self.players_setup, positions):
             if not s['play']: continue
             p = Player(self, team=s['team_name'], **p)
@@ -812,7 +824,16 @@ class Game(Screen):
             self.area.add_widget(p)
             self.planets.append(p)
 
-        
+        for cloud in self.level.get('clouds', []):
+            c = Cloud(self,
+                       size_hint=cloud['size'],
+                       pos_hint={'center_x': cloud['x'],
+                                 'center_y': cloud['y']})
+
+            self.area.add_widget(c)
+            #self.area.auto_bring_to_front(c)
+            self.clouds.append(c)
+
         
         self.background_sound.loop = True
         self.background_sound.volume = 0.5
