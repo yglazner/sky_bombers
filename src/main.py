@@ -241,7 +241,6 @@ class SplitBullet(Bullet):
         self.max_counter = 50
 
     def update(self):
-        print (self.center)
         super(SplitBullet, self).update()
         if self.counter == (self.max_counter-1):
             # TBD: play with the counter and number of bullets.
@@ -469,16 +468,13 @@ class SpeedGift(BaseGift):
 
     def apply_gift(self, player):
         player.speed *= 1.3
-        print("player %s thrust is %d" % (player.name, player.thrust))
 
 class LivesGift(BaseGift):
 
     SOURCE = "imgs/heart.png"
 
     def apply_gift(self, player):
-        print("player %s had %d lives" % (player.name, player.lives))
         player.lives += 1
-        print("and now he has %d lives" % (player.lives))
 
 class ExtraShotGift(BaseGift):
 
@@ -568,10 +564,10 @@ class SplitBulletGift(BaseGift):
         player.add_special_attack(SplitBulletSpecial())
 
 
-gift_types = [SplitBulletGift]#[SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
-              #FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield,
-              #DroneGift, MineGift, BiggerBulletGift, SineMissleGift, InvisibilityGift,
-              #]
+gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
+              FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield,
+              DroneGift, MineGift, BiggerBulletGift, SineMissleGift, InvisibilityGift, SplitBulletGift,
+              ]
 
 class Special(object):
 
