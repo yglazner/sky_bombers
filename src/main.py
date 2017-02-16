@@ -223,7 +223,6 @@ class Mine(Bullet):
         self.blow_rate = 1.2
         self.max_counter = 500
 
-
     def update(self):
         if self.counter == 75:
             self.owner = None
@@ -232,6 +231,28 @@ class Mine(Bullet):
         super(Mine, self).update()
         if not self.active:
             self.a = 1
+
+
+class SplitBullet(Bullet):
+    def __init__(self, game, owner, **kw):
+        super(SplitBullet, self).__init__(game, owner, owner.rotation, **kw)
+        self.velocity_x = owner.velocity_x + math.cos(radians(self.rotation)) * 10
+        self.velocity_y = owner.velocity_y + math.sin(radians(self.rotation)) * 10
+        self.max_counter = 50
+
+    def update(self):
+        print (self.center)
+        super(SplitBullet, self).update()
+        if self.counter == (self.max_counter-1):
+            # TBD: play with the counter and number of bullets.
+            num_of_bullets = 8
+            angle = 360/num_of_bullets
+            for i in range(num_of_bullets):
+                b = Bullet(self.game, self.owner, i * angle)
+                b.center = self.center
+                b.counter = b.max_counter - 50
+                b.first = 0
+                self.game.add_bullet(b)
 
 
 class AirCraft(Sprite):
@@ -539,10 +560,18 @@ class MineGift(BaseGift):
     def apply_gift(self, player):
         player.add_special_attack(MineSpecial())
 
-gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
-              FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield,
-              DroneGift, MineGift, BiggerBulletGift, SineMissleGift, InvisibilityGift,
-              ]
+
+class SplitBulletGift(BaseGift):
+    SOURCE = 'imgs/split_bullet.png'
+
+    def apply_gift(self, player):
+        player.add_special_attack(SplitBulletSpecial())
+
+
+gift_types = [SplitBulletGift]#[SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
+              #FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield,
+              #DroneGift, MineGift, BiggerBulletGift, SineMissleGift, InvisibilityGift,
+              #]
 
 class Special(object):
 
@@ -630,6 +659,19 @@ class MineSpecial(Special):
         mine = Mine(game, owner=self.owner)
         mine.size_hint = 0.05, 0.05
         game.add_bullet(mine)
+
+class SplitBulletSpecial(Special):
+    COOLDOWN = 3.5
+
+    def __init__(self):
+        super(SplitBulletSpecial, self).__init__()
+
+    def engage(self):
+        owner = self.owner
+        game = owner.game
+        SpB = SplitBullet(game, owner=self.owner)
+        game.add_bullet(SpB)
+
 
 def gen_gift(*args, **kw):
     return random.choice(gift_types)(*args, **kw)
