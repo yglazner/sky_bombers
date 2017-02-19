@@ -534,6 +534,13 @@ class ElectroMagnetShield(BaseGift):
 
     def apply_gift(self, player):
         player.add_special_defense(ElectroMagnet())
+        
+class NitroGirft(BaseGift):
+
+    SOURCE = "imgs/nitro.png"
+
+    def apply_gift(self, player):
+        player.add_special_defense(Nitro())
 
 class InvisibilityGift(BaseGift):
 
@@ -608,8 +615,18 @@ class FightingDroneSpecial(Special):
         self.active = 0
         self.last_activation = time.time()
 
-
-
+class Nitro(Special):
+    
+    BOOST = 15
+    COOLDOWN = 1.8
+    
+    def engage(self):
+        boost = self.BOOST
+        owner = self.owner
+        angle = radians(owner.rotation)
+        owner.velocity_x += cos(angle) * boost
+        owner.velocity_y += sin(angle) * boost  
+        
 class ElectroMagnet(Special):
 
     def engage(self):
