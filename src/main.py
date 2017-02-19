@@ -242,7 +242,7 @@ class SplitBullet(Bullet):
 
     def update(self):
         super(SplitBullet, self).update()
-        if self.counter == (self.max_counter-1):
+        if self.counter == (self.max_counter-1) and self.active:
             # TBD: play with the counter and number of bullets.
             num_of_bullets = 8
             angle = 360/num_of_bullets
@@ -574,7 +574,7 @@ class SplitBulletGift(BaseGift):
 gift_types = [SpeedGift, LivesGift, ExtraShotGift, HomingMissleGift,
               FasterReloadGift, ReverseKeysGift, SlowerReloadGift, ElectroMagnetShield,
               DroneGift, MineGift, BiggerBulletGift, SineMissleGift, InvisibilityGift, SplitBulletGift,
-              ]
+              NitroGirft,]
 
 class Special(object):
 
