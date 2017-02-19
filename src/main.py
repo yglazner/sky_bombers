@@ -144,6 +144,9 @@ class Bullet(Sprite):
         self.blow_rate = 2.0
         self.max_counter = 100
         self.counter = 0
+        self.r = 1
+        self.g = 0
+        self.b = 0
         self.a = 1
     def hit_by(self, other):
         if self.active:
@@ -246,11 +249,14 @@ class SplitBullet(Bullet):
             # TBD: play with the counter and number of bullets.
             num_of_bullets = 8
             angle = 360/num_of_bullets
+            colors = [[0,1,0],[0,0,1],[1,0,1],[1,1,0]] #,[0,1,1]]
             for i in range(num_of_bullets):
                 b = Bullet(self.game, self.owner, i * angle)
                 b.center = self.center
                 b.counter = b.max_counter - 50
                 b.first = 0
+                col = i % len(colors)
+                b.r, b.g, b.b = colors[col][0], colors[col][1], colors[col][2]
                 self.game.add_bullet(b)
 
 
