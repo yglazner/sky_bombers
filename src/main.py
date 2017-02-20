@@ -144,10 +144,9 @@ class Bullet(Sprite):
         self.blow_rate = 2.0
         self.max_counter = 100
         self.counter = 0
-        self.r = 1
-        self.g = 0
-        self.b = 0
+        self.r, self.g, self.b = owner.r, owner.g, owner.b
         self.a = 1
+        
     def hit_by(self, other):
         if self.active:
             self.active = False
@@ -246,19 +245,22 @@ class SplitBullet(Bullet):
     def update(self):
         super(SplitBullet, self).update()
         if self.counter == (self.max_counter-1) and self.active:
-            # TBD: play with the counter and number of bullets.
             num_of_bullets = 8
             angle = 360/num_of_bullets
-            colors = [[0,1,0],[0,0,1],[1,0,1],[1,1,0]] #,[0,1,1]]
             for i in range(num_of_bullets):
-                b = Bullet(self.game, self.owner, i * angle)
-                b.center = self.center
-                b.counter = b.max_counter - 50
-                b.first = 0
-                col = i % len(colors)
-                b.r, b.g, b.b = colors[col][0], colors[col][1], colors[col][2]
-                self.game.add_bullet(b)
-
+                self.velocity_x= self.velocity_y = 0
+                bullet = Bullet(self.game, self, i * angle)
+                bullet.center = self.center
+                bullet.counter = bullet.max_counter - 50
+                bullet.first = 0
+                bullet.owner = self.owner
+                r,g,b = 0,0,0
+                while r+g+b < 0.4:
+                    r,g,b = random.random(),random.random(),random.random()
+                bullet.r, bullet.g, bullet.b = r, g, b
+                self.game.add_bullet(bullet)
+            self.active = False
+            self.game.remove_bullet(self)
 
 class AirCraft(Sprite):
     lives = NumericProperty(5)
