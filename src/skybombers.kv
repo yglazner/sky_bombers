@@ -101,23 +101,48 @@
         Line:
             circle: (self.size[0]/2, self.size[1]/2, self.radius * self.blow)            
         
-
+<StatusBar>:
+    
 <Game>:
     area: area
+    status_bar: status_bar
     foreground: foreground
 #     Image:
 #         id: background
 #         size: root.size
 #         source: random.choice(["imgs/Clouds_RJ1_2613.jpg"])
 #         strech: True
-#         keep_ratio: False            
-    FloatLayout:
-        id: area
+#         keep_ratio: False     
+    BoxLayout:
+        orientation:  'vertical'
+        
+                    
+        FloatLayout:
+            size_hint: 1.0, 0.9
+            id: area
+            canvas.after:
+                Color:
+                    rgba: 0, 1, 0, 0.5
+                Line:
+                    rectangle: [self.x, self.y, self.width, self.height]
+                    width: 3
+        StatusBar:
+            id: status_bar   
+            size_hint: 1.0, 0.1
+            canvas.before:
+                Color:
+                    rgba: 0, 1, 1, 0.5
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+                    
     FloatLayout:
         id: foreground
-    Label:
-        text: 'FPS'
-        pos_hint: {'x': 0.50, 'y':0.80}
+        pos: area.pos
+        size: area.size
+        Label:
+            text: 'FPS'
+            pos_hint: {'x': 0.50, 'y':0.80}
 
 <MyButton@BoxLayout+Button>:
     id: pop

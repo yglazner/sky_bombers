@@ -29,6 +29,7 @@ from kivy.core.audio import SoundLoader
 import json
 import time
 from kivy.animation import Animation
+from kivy.uix.boxlayout import BoxLayout
 
 sm = ScreenManager()
 
@@ -69,15 +70,8 @@ class Sprite(Scatter):
         self.velocity_y = velocity_y
 
     def check_wall_collision(self):
-        x, y = self.center
-        if x  < 0:
-            return True
-        if x  > GlobalStuff.right:
-            return True
-        if y > GlobalStuff.top:
-            return True
-        if y < 0:
-            return True
+        return not self.game.area.collide_widget(self)
+      
 
     def update(self, plats=[],):
         thrust = self.thrust
@@ -830,11 +824,13 @@ class Pulse(Sprite):
     
     pass
 
+class StatusBar(BoxLayout):
+    pass
 
 class Game(Screen):
     area = ObjectProperty(None)
     foreground = ObjectProperty(None)
-    
+    status_bar = ObjectProperty(None)
     
     def __init__(self, **kw):
         Screen.__init__(self, **kw)
@@ -919,10 +915,11 @@ class Game(Screen):
         self.bullets = []
         self.drones = []
         self.mines = []
-        h = GlobalStuff.height * 0.10
-        w = GlobalStuff.width * 0.10
-        positions = [ (w, h, 45), (w * 5, h * 9, -90), (w * 9, h, 135),
-                      (w, h * 9, -45), (w * 9, h * 9, -135), (w * 5, h, 90),
+        h = self.area.height * 0.10
+        w = self.area.width * 0.10
+        x, y = self.area.pos
+        positions = [ (x + w, y + h, 45), (x + w * 5, y + h * 9, -90), (x + w * 9, y + h, 135),
+                      (x + w, y + h * 9, -45), (x + w * 9, y + h * 9, -135), (x + w * 5, y + h, 90),
                       ]
         
         self._create_portals()
