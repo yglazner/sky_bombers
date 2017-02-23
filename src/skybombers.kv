@@ -82,11 +82,11 @@
             rgba: self.r, self.g, self.b, self.a
         Triangle:
             points: (0,0,self.width,self.height/2, 0, self.height)   
-        Color:
-            rgba: 0.0 , 0.94, 0.5, self.a
-        Rectangle:
-            pos: (-self.width*0.10 ,self.height /10 * (5-self.lives), )
-            size: self.width*0.10, (self.height * 0.80) * (self.lives)/ 5
+        #Color:
+        #    rgba: 0.0 , 0.94, 0.5, self.a
+        #Rectangle:
+        #    pos: (-self.width*0.10 ,self.height /10 * (5-self.lives), )
+        #    size: self.width*0.10, (self.height * 0.80) * (self.lives)/ 5
                
         
 <Player>:
@@ -99,10 +99,36 @@
         Color:
             rgba: self.r, self.g, self.b, self.a
         Line:
-            circle: (self.size[0]/2, self.size[1]/2, self.radius * self.blow)            
-        
-<StatusBar>:
+            circle: (self.size[0]/2, self.size[1]/2, self.radius * self.blow)
+                        
+<PlayerStatus>:
+    size_hint: 1/7.0, 1.0
+    canvas.before:
+        Color:
+            rgb: self.player.r, self.player.g, self.player.b,
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    AutoSizedLabel:
+        id: name
+        color: 1-root.player.r,1-root.player.g,1-root.player.b, 0.8
+        text: root.player.name
+        ratio: 0.8
+    AutoSizedLabel:
+        id: lives
+        color: 1-root.player.r,1-root.player.g,1-root.player.b, 0.8
+        text: "power: %d" % root.player.lives
+        ratio: 0.8
     
+    
+
+<StatusBar>:
+    round: 1
+    AutoSizedLabel:
+        text: "Round: %s" % root.round 
+        size_hint: 1.0/7,1.0
+        ratio: 0.8
+
 <Game>:
     area: area
     status_bar: status_bar

@@ -811,8 +811,27 @@ class Pulse(Sprite):
     
     pass
 
+class PlayerStatus(BoxLayout):
+    
+    player = ObjectProperty(None)
+    
+    def __init__(self, player, **kwargs):
+        self.player = player
+        super(PlayerStatus, self).__init__(**kwargs)
+
 class StatusBar(BoxLayout):
-    pass
+    
+    def set_players(self, players):
+        size_hint = 1.0/(len(players) + 1), 1.0
+        for p in players:
+            ps = PlayerStatus(p, size_hint=size_hint)
+            self.add_widget(ps)
+    
+    def clear(self):
+        
+        players = [p for p in self.children if isinstance(p, PlayerStatus)]
+        for p in players:
+            self.children.remove(p)
 
 class Game(Screen):
     area = ObjectProperty(None)
@@ -912,7 +931,8 @@ class Game(Screen):
         self._create_portals()
         self._create_arrows()   
         
-
+        self.status_bar.clear()
+        
         for p, s, pos in zip(ConfigScreen.players, self.players_setup, positions):
             if not s['play']: continue
             p = Player(self, team=s['team_name'], **p)
@@ -921,6 +941,8 @@ class Game(Screen):
             
             self.players.append(p)
             self.area.add_widget(p)
+            
+        self.status_bar.set_players(self.players)
             
         self._create_plantes(p)
 
