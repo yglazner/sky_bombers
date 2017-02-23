@@ -31,6 +31,7 @@ import time
 from kivy.animation import Animation
 from kivy.uix.boxlayout import BoxLayout
 
+
 sm = ScreenManager()
 
 KEYS = defaultdict(lambda: None)
@@ -103,20 +104,6 @@ class Sprite(Scatter):
         if d < ((self.radius+other.radius+area)**2):
             return 1
 
-
-
-class GlobalStuff(object):
-
-
-    @classmethod
-    def init(cls):
-        cls.right = Window.width
-        cls.left = 0
-        cls.top = Window.height
-        cls.buttom = 0
-        cls.center_x = Window.width / 2
-        cls.center_y = Window.height / 2
-        cls.size = cls.width, cls.height = Window.width, Window.height
 
 
 class Bullet(Sprite):
@@ -1010,20 +997,20 @@ class Game(Screen):
         stuff = {'size_hint': (0.03, 0.03)}
         speed = random.choice([1, 2, 3])
         if p in ['left', 'right']:
-            y = (GlobalStuff.top - 20) * random.random() + 10
+            y = (self.area.top - 20) * random.random() + 10
             if p == 'left':
-                x = 50
+                x = self.area.x + 50
                 stuff['velocity_x'] = 1* speed
             else:
-                x = GlobalStuff.right
+                x = self.area.right
                 stuff['velocity_x'] = -1*speed
         else:
-            x = (GlobalStuff.right - 20) * random.random() + 10
+            x = (self.area.right - 20) * random.random() + 10
             if p == 'top':
-                y = GlobalStuff.top
+                y = self.area.top
                 stuff['velocity_y'] = -1*speed
             else:
-                y = 50
+                y = self.area.y + 50
                 stuff['velocity_y'] = 1*speed
     
         gift = gen_gift(self, center_x=x, center_y=y, **stuff)
@@ -1378,7 +1365,7 @@ class SkyBombersApp(App):
         Window.bind(on_joy_axis=on_joy_axis)
         Window.bind(on_joy_button_down=on_joy_button_down)
         Window.bind(on_joy_button_up=on_joy_button_up)
-        GlobalStuff.init()
+
         
         config= ConfigScreen(name='config')
         sm.add_widget(config)
@@ -1389,8 +1376,7 @@ class SkyBombersApp(App):
         sm.add_widget(GameOver(name='game_over'))
         sm.add_widget(Menu(name='menu'))
         sm.current = 'menu'
-        for i in range(6):
-            Clock.schedule_once(lambda dt: GlobalStuff.init(), i)
+
        
         return sm
 
