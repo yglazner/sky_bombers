@@ -102,23 +102,34 @@
             circle: (self.size[0]/2, self.size[1]/2, self.radius * self.blow)
                         
 <PlayerStatus>:
+    orientation: "vertical"
     size_hint: 1/7.0, 1.0
+    color:  1-root.player.r,1-root.player.g,1-root.player.b, 0.8
     canvas.before:
         Color:
             rgb: self.player.r, self.player.g, self.player.b,
         Rectangle:
             pos: self.pos
             size: self.size
+
     AutoSizedLabel:
+        
         id: name
-        color: 1-root.player.r,1-root.player.g,1-root.player.b, 0.8
+        color: root.color
         text: root.player.name
         ratio: 0.8
     AutoSizedLabel:
+        
         id: lives
-        color: 1-root.player.r,1-root.player.g,1-root.player.b, 0.8
+        color: root.color
         text: "power: %d" % root.player.lives
         ratio: 0.8
+    AutoSizedLabel:
+        id:team
+        
+        color: root.color
+        text: root.player.team or "-"
+        ratio: 0.5
     
     
 
