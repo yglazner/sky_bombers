@@ -319,7 +319,7 @@ class Drone(AirCraft):
         self.r = owner.r
         self.g = owner.g
         self.b = owner.b
-        self.a = owner.a
+        self.a = 1#owner.a
 
     def update(self):
         if self._first_time:
@@ -371,10 +371,12 @@ class Player(AirCraft):
         self.specials_attack = None#set()
 
     def add_special_defense(self, s):
-        self.specials_defense = s
+        if self.specials_defense != s:
+            self.specials_defense = s
 
     def add_special_attack(self, s):
-        self.specials_attack = s
+        if self.specials_attack != s:
+            self.specials_attack = s
 
     def update(self,  user_pressed=KEYS):
 
