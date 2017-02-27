@@ -371,11 +371,11 @@ class Player(AirCraft):
         self.specials_attack = None#set()
 
     def add_special_defense(self, s):
-        if self.specials_defense != s:
+        if type(self.specials_defense) != type(s):
             self.specials_defense = s
 
     def add_special_attack(self, s):
-        if self.specials_attack != s:
+        if type(self.specials_attack) != type(s):
             self.specials_attack = s
 
     def update(self,  user_pressed=KEYS):
