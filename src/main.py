@@ -817,16 +817,17 @@ class PlayerStatus(BoxLayout):
     
     player = ObjectProperty(None)
     
-    def __init__(self, player, **kwargs):
+    def __init__(self, player, wins, **kwargs):
         self.player = player
+        self.wins = str(wins)
         super(PlayerStatus, self).__init__(**kwargs)
 
 class StatusBar(BoxLayout):
     
-    def set_players(self, players):
+    def set_players(self, players, score):
         size_hint = 1.0/(len(players) + 1), 1.0
-        for p in players:
-            ps = PlayerStatus(p, size_hint=size_hint)
+        for i in range(len(players)):
+            ps = PlayerStatus(players[i], score.points_arr[i], size_hint=size_hint)
             self.add_widget(ps)
     
     def clear(self):
@@ -835,10 +836,36 @@ class StatusBar(BoxLayout):
         for p in players:
             self.children.remove(p)
 
+class Score(Sprite):
+
+    points_arr = []  # init with 0 to player that play in the game, and None if he don't
+    def clear(self, players):
+        for i in range(len(players)):
+            self.points_arr.append(0)
+            if players[i]['play'] == True:
+                #self.points_arr.append(0)
+                if players[i]['team'] == 0:
+                    self.mode = "free"
+                else:
+                    self.mode = "teams"
+            #else:
+                #self.points_arr.append(None)
+        print("Begin: ", self.points_arr)
+
+    def update(self, winner_list):
+        # winner is list of number of players
+        for i in winner_list:
+            self.points_arr[i] += 1
+        print("Update: ", self.points_arr)
+
+
+
+
 class Game(Screen):
     area = ObjectProperty(None)
     foreground = ObjectProperty(None)
     status_bar = ObjectProperty(None)
+    score = Score(None)
     
     def __init__(self, **kw):
         Screen.__init__(self, **kw)
@@ -852,6 +879,7 @@ class Game(Screen):
     def setup(self, players, level):
         self.players_setup = players
         self.level = level
+        self.score.clear(players)
         
     @property
     def flying_objects(self):
@@ -923,6 +951,7 @@ class Game(Screen):
         self.bullets = []
         self.drones = []
         self.mines = []
+
         h = self.area.height * 0.10
         w = self.area.width * 0.10
         x, y = self.area.pos
@@ -944,8 +973,8 @@ class Game(Screen):
             self.players.append(p)
             self.area.add_widget(p)
             
-        self.status_bar.set_players(self.players)
-            
+        self.status_bar.set_players(self.players, self.score)
+        
         self._create_plantes(p)
 
         self._create_clouds()
@@ -1047,6 +1076,9 @@ class Game(Screen):
         self.count += dt
         self.frames_count += 1
         random.shuffle(self.players)
+        team2name = {0: "",
+                     1: "N00Bly",
+                     2: "Cheesy", }
         for o in itertools.chain(self.bullets,
                                  self.planets,
                                  self.portals,
@@ -1068,11 +1100,23 @@ class Game(Screen):
         if len(self.players+self.dead_players) < 2:
             s = self.manager.get_screen('game_over')
             s.set_winner(self.players[0].name if self.players else None)
+            # update the wins for the winning player
+            if self.players:
+                # self.score.points_arr[int(self.players[0].name[-1])] += 1
+                self.score.update([int(self.players[0].name[-1])-1])
             self.manager.current = 'game_over'
         
         teams_left = set(p.team for p in self.players if p.team)
         if len(teams_left) == 1:
             winner = 'Team %s' % (self.players[0].team)
+            # update the wins for the players in the winning team
+            win_list = []
+            for i in range(len(self.players_setup)):
+                print (self.players_setup[i]['team'], self.players[0].team)
+                if team2name[self.players_setup[i]['team']] == self.players[0].team:
+                    # self.score.points_arr[i+1] += 1
+                    win_list.append(i)
+            self.score.update(win_list)
             self.gameover(winner)
         
         if random.random() > 0.985:

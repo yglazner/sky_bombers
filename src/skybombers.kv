@@ -125,10 +125,16 @@
         text: "power: %d" % root.player.lives
         ratio: 0.8
     AutoSizedLabel:
+
         id:team
-        
         color: root.color
         text: root.player.team or "-"
+        ratio: 0.5
+    AutoSizedLabel:
+
+        id: wins
+        color: root.color
+        text: root.wins or "-"
         ratio: 0.5
     
     
