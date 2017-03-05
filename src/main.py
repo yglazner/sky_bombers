@@ -1244,7 +1244,7 @@ class ConfigScreen(Screen):
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
                    'pos': (50, 50),
                    
-                   'r': 1.0, 'g': 1.0, 'b': 0.75,
+                   'r': 1.0, 'g': 0.0, 'b': 0.00, 'a':1.0,
                    
                    'rotation': 45 
                    },
@@ -1252,14 +1252,14 @@ class ConfigScreen(Screen):
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
                    'pos': (50, 200),
                   
-                   'r': 1.0, 'g': 1.0, 'b': 1.0,
+                   'r': 0.0, 'g': 1.0, 'b': 0.0, 'a':1.0,
                    'rotation': 45 
                    },
                 {'name': 'Player3', 
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
                    'pos': (250, 50),
                   
-                   'r': 0.75, 'g': 0.99, 'b': 0.75,
+                   'r': 0.99, 'g': 0.00, 'b': 0.99, 'a':1.0,
                    'rotation': 45 
                    },
                
@@ -1267,21 +1267,21 @@ class ConfigScreen(Screen):
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
                    'pos': (350, 50),
                   
-                   'r': 0.99, 'g': 0.5, 'b': 0.6,
+                   'r': 0.99, 'g': 0.99, 'b': 0.00, 'a':1.0,
                    'rotation': 45 
                    },
                 {'name': 'Player5', 
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
                    'pos': (450, 50),
                   
-                   'r': 1.0, 'g': 0.55, 'b': 0.99,
+                   'r': 0.0, 'g': 0.99, 'b': 0.99, 'a':1.0,
                    'rotation': 45 
                    },
                 {'name': 'Player6', 
                    'source': 'imgs/DUCK.GIF', #'weapon': 'gun',
                    'pos': (550, 50),
                   
-                   'r': 0.35, 'g': 0.99, 'b': 0.99,
+                   'r': 0.35, 'g': 0.99, 'b': 0.99, 'a':1.0,
                    'rotation': 45 
                    },
                ]
